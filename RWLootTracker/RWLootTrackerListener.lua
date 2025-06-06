@@ -1,4 +1,4 @@
--- Dies ist die Listener-Datei, die sich um die Beute-Events kümmert.
+-- Dies ist die Listener-Datei, die sich um die Beute-Events kütert.
 
 -- Zugriff auf globale Addon-Datenbank und Konfiguration
 -- LootTrackerDB und LootTrackerConfig werden von RWLootTracker.lua global definiert
@@ -63,10 +63,12 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
 
             -- START NEUE LOGIK FÜR rollTypeName
             local rollTypeName = "Unbekannt"
+            local rollValue = 0 -- Initialisiere rollValue
             if dropInfo.rollInfos then
                 for _, roll in ipairs(dropInfo.rollInfos) do
                     if roll.isWinner then
                         local rollType = roll.state
+                        rollValue = roll.roll -- Erfasse den Rollwert
                         if rollType == Enum.EncounterLootDropRollState.NeedMainSpec then
                             rollTypeName = "Need (Main Spec)"
                         elseif rollType == Enum.EncounterLootDropRollState.NeedOffSpec then
@@ -109,6 +111,11 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
             local fullTime = date("%Y-%m-%d %H:%M:%S")
             local dateOnly = date("%Y-%m-%d")
 
+            -- Zusätzliche Informationen aus dropInfo.winner
+            local playerGUID = dropInfo.winner.playerGUID or "Unbekannt"
+            local playerClass = dropInfo.winner.class or "Unbekannt"
+            local playerSpecialization = dropInfo.winner.specialization or "Unbekannt"
+
 
             -- Sicherstellen, dass LootTrackerDB existiert, bevor darauf zugegriffen wird
             LootTrackerDB = LootTrackerDB or {}
@@ -117,10 +124,14 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
             table.insert(LootTrackerDB[dateOnly], {
                 time = fullTime,
                 player = dropInfo.winner.playerName,
+                playerGUID = playerGUID, -- NEU: Spieler GUID
+                playerClass = playerClass, -- NEU: Spieler Klasse
+                playerSpecialization = playerSpecialization, -- NEU: Spieler Spezialisierung
                 item = dropInfo.itemHyperlink,
                 itemID = itemID,
                 itemName = itemName,
                 method = rollTypeName,
+                rollValue = rollValue, -- NEU: Rollwert
                 boss = bossName,
                 armorType = armorType,
                 slot = itemSlot,
@@ -129,7 +140,7 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
 
             -- Sicherstellen, dass LootTrackerConfig existiert, bevor darauf zugegriffen wird
             if LootTrackerConfig and LootTrackerConfig.LogToChat then
-                print("RWLootTracker: Gewinner erkannt: " .. dropInfo.winner.playerName .. ", " .. itemName .. " (Roll: " .. rollTypeName .. ")")
+                print("RWLootTracker: Gewinner erkannt: " .. dropInfo.winner.playerName .. " (" .. playerClass .. ", " .. playerSpecialization .. ", GUID: " .. playerGUID .. "), " .. itemName .. " (Roll: " .. rollTypeName .. ", Wert: " .. rollValue .. ")")
             end
 
             -- Speichere die Daten nach jedem Loot-Drop

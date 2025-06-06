@@ -41,18 +41,24 @@ local function UpdateLootDetailsText(editBox, selectedDate)
         DebugPrint("UpdateLootDetailsText: Keine Daten gefunden für " .. selectedDate .. ". LootTrackerDB[" .. selectedDate .. "] ist leer oder nil.")
         -- Keine Header-Zeile hinzufügen, wenn keine Daten vorhanden sind
     else
-        table.insert(lines, "Zeit\tBoss\tSpieler\tGegenstand\tItemname\tItemID\tRollart\tRüstungstyp\tSlot") -- Header nur hinzufügen, wenn Daten vorhanden sind
+        -- Aktualisierter Header mit neuen Feldern
+        table.insert(lines, "Zeit\tBoss\tSpieler\tGUID\tKlasse\tSpezialisierung\tGegenstand\tItemname\tItemID\tRollart\tRollwert\tRüstungstyp\tSlot")
     end
 
     for _, entry in ipairs(entriesToDisplay) do
-        table.insert(lines, string.format('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s',
+        -- Aktualisierte Formatierung für jede Zeile mit neuen Feldern
+        table.insert(lines, string.format('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s',
             entry.time or "",
             entry.boss or "",
             entry.player or "",
+            entry.playerGUID or "",         -- NEU: Spieler GUID
+            entry.playerClass or "",        -- NEU: Spieler Klasse
+            entry.playerSpecialization or "", -- NEU: Spieler Spezialisierung
             entry.item or "",
             entry.itemName or "",
             entry.itemID or "",
             entry.method or "",
+            entry.rollValue or "",          -- NEU: Rollwert
             entry.armorType or "",
             entry.slot or ""
         ))
@@ -80,6 +86,7 @@ local function ShowLootDetailsFrame(selectedDate)
         f.title = f:CreateFontString(nil, "OVERLAY")
         f.title:SetFontObject("GameFontHighlight")
         f.title:SetPoint("LEFT", f.TitleBg, "LEFT", 5, 0)
+        f.title:SetText("Beute für den " .. selectedDate)
         f.title:SetTextColor(1, 1, 1, 1)
 
         -- Korrigierte Positionierung des Close Buttons für BasicFrameTemplateWithInset
@@ -206,15 +213,19 @@ local function GenerateDebugLootData()
     LootTrackerDB = {}
 
     -- Funktion zum Hinzufügen eines einzelnen Beute-Eintrags
-    local function AddDebugEntry(dateOnly, timeSuffix, player, itemLink, itemID, itemName, method, boss, armorType, slot)
+    local function AddDebugEntry(dateOnly, timeSuffix, player, playerGUID, playerClass, playerSpecialization, itemLink, itemID, itemName, method, rollValue, boss, armorType, slot)
         LootTrackerDB[dateOnly] = LootTrackerDB[dateOnly] or {}
         table.insert(LootTrackerDB[dateOnly], {
             time = dateOnly .. " " .. timeSuffix,
             player = player,
+            playerGUID = playerGUID,
+            playerClass = playerClass,
+            playerSpecialization = playerSpecialization,
             item = itemLink,
             itemID = itemID,
             itemName = itemName,
             method = method,
+            rollValue = rollValue,
             boss = boss,
             armorType = armorType,
             slot = slot,
@@ -229,24 +240,24 @@ local function GenerateDebugLootData()
 
         -- Tag 1: Heute (i=0) - Corresponds to current day (e.g., 2025-06-05) if today is June 5th
         if i == 0 then
-            AddDebugEntry(currentDate, "20:00:00", "SpielerA", "|cffa335ee|Hitem:19019:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Donnerzorn, Gesegnete Klinge des Windsuchers]|h|r", 19019, "Donnerzorn", "NEED", "Ragnaros", "Waffe", "Main Hand")
-            AddDebugEntry(currentDate, "20:15:30", "SpielerB", "|cff0070dd|Hitem:23072:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Helm des Schnellflugs]|h|r", 23072, "Helm des Schnellflugs", "GREED", "Onyxia", "Stoff", "Kopf")
-            AddDebugEntry(currentDate, "20:30:00", "SpielerC", "|cff1eff00|Hitem:124636:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Herz des Teufelspirschers]|h|r", 124636, "Herz des Teufelspirschers", "BONUS", "Kael'thas Sunstrider", "Schmuckstück", "Schmuckstück")
+            AddDebugEntry(currentDate, "20:00:00", "SpielerA", "0x1234567890ABCDEF", "Krieger", "Furor", "|cffa335ee|Hitem:19019:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Donnerzorn, Gesegnete Klinge des Windsuchers]|h|r", 19019, "Donnerzorn", "Need (Main Spec)", 95, "Ragnaros", "Waffe", "Main Hand")
+            AddDebugEntry(currentDate, "20:15:30", "SpielerB", "0xFEDCBA9876543210", "Magier", "Feuer", "|cff0070dd|Hitem:23072:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Helm des Schnellflugs]|h|r", 23072, "Helm des Schnellflugs", "Greed", 42, "Onyxia", "Stoff", "Kopf")
+            AddDebugEntry(currentDate, "20:30:00", "SpielerC", "0x1234567812345678", "Paladin", "Schutz", "|cff1eff00|Hitem:124636:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Herz des Teufelspirschers]|h|r", 124636, "Herz des Teufelspirschers", "Bonus", 88, "Kael'thas Sunstrider", "Schmuckstück", "Schmuckstück")
         -- Tag 2: Gestern (i=1)
         elseif i == 1 then
-            AddDebugEntry(currentDate, "19:00:00", "SpielerD", "|cff0070dd|Hitem:49623:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Schiftung der Geißel des Eisens]|h|r", 49623, "Schiftung der Geißel des Eisens", "NEED", "Lord Mark'gar", "Platte", "Schulter")
-            AddDebugEntry(currentDate, "19:45:00", "SpielerE", "|cff1eff00|Hitem:50444:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Schattenmourne]|h|r", 50444, "Schattenmourne", "NEED", "Lichkönig", "Waffe", "Zweihändig")
+            AddDebugEntry(currentDate, "19:00:00", "SpielerD", "0xABCDEF0123456789", "Todesritter", "Blut", "|cff0070dd|Hitem:49623:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Schiftung der Geißel des Eisens]|h|r", 49623, "Schiftung der Geißel des Eisens", "Need (Main Spec)", 70, "Lord Mark'gar", "Platte", "Schulter")
+            AddDebugEntry(currentDate, "19:45:00", "SpielerE", "0x9876543210FEDCBA", "Jäger", "Tierherrschaft", "|cff1eff00|Hitem:50444:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Schattenmourne]|h|r", 50444, "Schattenmourne", "Need (Main Spec)", 99, "Lichkönig", "Waffe", "Zweihändig")
         -- Tag 3: Vor 2 Tagen (i=2)
         elseif i == 2 then
-            AddDebugEntry(currentDate, "21:00:00", "SpielerF", "|cff0070dd|Hitem:32371:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Kopfschmuck des Verwandlers]|h|r", 32371, "Kopfschmuck des Verwandlers", "GREED", "Illidan Sturmgrimm", "Leder", "Kopf")
-            AddDebugEntry(currentDate, "21:10:00", "SpielerG", "|cffa335ee|Hitem:30720:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Aschenbringer]|h|r", 30720, "Aschenbringer", "NEED", "Kel'Thuzad", "Waffe", "Zweihändig")
+            AddDebugEntry(currentDate, "21:00:00", "SpielerF", "0xBA9876543210FEDC", "Druide", "Wiederherstellung", "|cff0070dd|Hitem:32371:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Kopfschmuck des Verwandlers]|h|r", 32371, "Kopfschmuck des Verwandlers", "Greed", 30, "Illidan Sturmgrimm", "Leder", "Kopf")
+            AddDebugEntry(currentDate, "21:10:00", "SpielerG", "0x1FEDCBA987654321", "Priester", "Schatten", "|cffa335ee|Hitem:30720:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Aschenbringer]|h|r", 30720, "Aschenbringer", "Need (Main Spec)", 100, "Kel'Thuzad", "Waffe", "Zweihändig")
         -- Tag 4: Vor 3 Tagen (i=3)
         elseif i == 3 then
-            AddDebugEntry(currentDate, "18:30:00", "SpielerH", "|cff0070dd|Hitem:6948:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Defias-Lederweste]|h|r", 6948, "Defias-Lederweste", "PASS", "Edwin VanCleef", "Leder", "Brust")
+            AddDebugEntry(currentDate, "18:30:00", "SpielerH", "0x567890ABCDEF1234", "Schurke", "Täuschung", "|cff0070dd|Hitem:6948:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Defias-Lederweste]|h|r", 6948, "Defias-Lederweste", "Pass", 0, "Edwin VanCleef", "Leder", "Brust")
         -- Tag 5: Vor 4 Tagen (i=4)
         elseif i == 4 then
-            AddDebugEntry(currentDate, "22:00:00", "SpielerI", "|cff1eff00|Hitem:13374:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Zulianischer Tiger]|h|r", 13374, "Zulianischer Tiger", "NEED", "Hoher Priester Thekal", "Sonstiges", "Mount")
-            AddDebugEntry(currentDate, "22:05:00", "SpielerJ", "|cff0070dd|Hitem:13375:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Raptor des Razzashi]|h|r", 13375, "Raptor des Razzashi", "GREED", "Hoher Priester Venoxis", "Sonstiges", "Mount")
+            AddDebugEntry(currentDate, "22:00:00", "SpielerI", "0xABCD1234EFGH5678", "Hexenmeister", "Dämonologie", "|cff1eff00|Hitem:13374:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Zulianischer Tiger]|h|r", 13374, "Zulianischer Tiger", "Need (Main Spec)", 60, "Hoher Priester Thekal", "Sonstiges", "Mount")
+            AddDebugEntry(currentDate, "22:05:00", "SpielerJ", "0x87654321HGFE9876", "Mönch", "Braumeister", "|cff0070dd|Hitem:13375:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Raptor des Razzashi]|h|r", 13375, "Raptor des Razzashi", "Greed", 25, "Hoher Priester Venoxis", "Sonstiges", "Mount")
         end
     end
 
@@ -389,7 +400,7 @@ function RWLootTrackerGlobal.CreateGUI()
     f.title = f:CreateFontString(nil, "OVERLAY")
     f.title:SetFontObject("GameFontHighlight")
     f.title:SetPoint("LEFT", f.TitleBg, "LEFT", 5, 0)
-    f.title:SetText("RWLootTracker "  .. RWLootTrackerGlobal.Version) -- Nur Addon-Name als Haupttitel
+    f.title:SetText("RWLootTracker") -- Nur Addon-Name als Haupttitel
     f.title:SetTextColor(1, 1, 1, 1)
 
     -- Hintergrundleiste für die Tabs, spanning the main frame's width
@@ -715,7 +726,7 @@ function RWLootTrackerGlobal.CreateGUI()
                     if RWLootTrackerGlobal.SaveLootData then -- Prüfung hinzugefügt
                         RWLootTrackerGlobal.SaveLootData() -- Speichere den leeren Zustand
                     else
-                        DebugPrint("FEHLER: RWLootTrackerGlobal.SaveLootData ist NIL! Daten können nicht gespeichert werden.")
+                        DebugPrint("FEHLER: RWLootTrackerGlobal.SaveLootData ist NIL! Daten können nicht sofort gespeichert werden.")
                     end
                     RWLootTrackerGlobal.InitializeCalendar() -- Kalender aktualisieren, um die leeren Daten anzuzeigen
                     DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[RWLootTracker]|r Die Beutedatenbank wurde erfolgreich geleert.")
