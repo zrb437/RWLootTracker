@@ -111,10 +111,19 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
             local fullTime = date("%Y-%m-%d %H:%M:%S")
             local dateOnly = date("%Y-%m-%d")
 
-            -- Zusätzliche Informationen aus dropInfo.winner
+            -- Zusätzliche Informationen aus dropInfo.winner und erweiterte Logik für Klasse/Spezialisierung
             local playerGUID = dropInfo.winner.playerGUID or "Unbekannt"
-            local playerClass = dropInfo.winner.class or "Unbekannt"
-            local playerSpecialization = dropInfo.winner.specialization or "Unbekannt"
+            local playerClass = "Unbekannt"
+            local playerSpecialization = dropInfo.winner.specialization or "Unbekannt" -- Spezialisierung direkt von dropInfo.winner nehmen
+
+            -- Versuche, die Klasse über GetPlayerInfoByGUID zu ermitteln und zu lokalisieren
+            if playerGUID ~= "Unbekannt" then
+                -- Korrigiert: Der ERSTE Rückgabewert von GetPlayerInfoByGUID ist die lokalisierte Klasse.
+                local locClassString, _, _, _, _, _, _ = GetPlayerInfoByGUID(playerGUID)
+                if locClassString then
+                    playerClass = locClassString -- Nimm die lokalisierte Klasse direkt
+                end
+            end
 
 
             -- Sicherstellen, dass LootTrackerDB existiert, bevor darauf zugegriffen wird
@@ -125,7 +134,7 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
                 time = fullTime,
                 player = dropInfo.winner.playerName,
                 playerGUID = playerGUID, -- NEU: Spieler GUID
-                playerClass = playerClass, -- NEU: Spieler Klasse
+                playerClass = playerClass, -- NEU: Spieler Klasse (lokalisiert)
                 playerSpecialization = playerSpecialization, -- NEU: Spieler Spezialisierung
                 item = dropInfo.itemHyperlink,
                 itemID = itemID,

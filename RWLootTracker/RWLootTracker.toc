@@ -4,8 +4,7 @@
 ## Author: Die oberste Rangelleitung
 ## SavedVariables: LootTrackerConfig, LootTrackerDB
 ## Dependencies: Blizzard_Console
-## Version: 0.2.3
+## Version: 0.2.6
 RWLootTracker.lua
 RWLootTrackerViewer.lua
 RWLootTrackerListener.lua
-

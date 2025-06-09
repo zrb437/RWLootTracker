@@ -400,7 +400,7 @@ function RWLootTrackerGlobal.CreateGUI()
     f.title = f:CreateFontString(nil, "OVERLAY")
     f.title:SetFontObject("GameFontHighlight")
     f.title:SetPoint("LEFT", f.TitleBg, "LEFT", 5, 0)
-    f.title:SetText("RWLootTracker") -- Nur Addon-Name als Haupttitel
+    f.title:SetText("RWLootTracker " .. RWLootTrackerGlobal.Version) -- Nur Addon-Name als Haupttitel
     f.title:SetTextColor(1, 1, 1, 1)
 
     -- Hintergrundleiste für die Tabs, spanning the main frame's width
