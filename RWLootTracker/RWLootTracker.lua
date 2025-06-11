@@ -16,7 +16,7 @@ LootTrackerConfig = LootTrackerConfig or {} -- Wird unten durch ApplyDefaults in
 LootTrackerDB = LootTrackerDB or {}
 
 -- Versionsnummer des Addons (jetzt global über RWLootTrackerGlobal verfügbar)
-RWLootTrackerGlobal.Version = "0.2.6" -- Versionsnummer aktualisiert
+RWLootTrackerGlobal.Version = "0.2.9"
 
 -- Standardkonfiguration für das Addon
 local defaults = {
@@ -97,12 +97,11 @@ end
 
 -- Erstelle den Haupt-Frame, um Events zu registrieren
 local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PLAYER_LOGIN") -- Für die Konfigurationsinitialisierung bei jedem Login
 
 -- Setze das Skript, um Events zu behandeln
 frame:SetScript("OnEvent", function(self, event, ...)
-    if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LOGIN" then
+    if event == "PLAYER_LOGIN" then
         -- Stelle sicher, dass LootTrackerConfig korrekt mit Standardwerten initialisiert ist
         ApplyDefaults(LootTrackerConfig, defaults)
         print("RWLootTracker geladen und bereit (Version " .. RWLootTrackerGlobal.Version .. ").")

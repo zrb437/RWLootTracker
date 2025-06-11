@@ -29,13 +29,13 @@ local function ShouldTrackInstance()
     end
 end
 
--- Die alte ROLL_TYPE_MAPPING Tabelle ist nicht mehr direkt notwendig, da wir die Enums abfragen.
--- Trotzdem lassen wir sie hier, falls noch andere Verwendungen bestehen oder zur Referenz.
+-- Zuordnung von Enum.LootRollType-Werten (Zahlen) zu ihren String-Namen
+-- Wird hier beibehalten, auch wenn eine detailliertere Logik für rollTypeName verwendet wird.
 local ROLL_TYPE_MAPPING = {
-    [0] = "NEED",       -- Entspricht Enum.LootRollType.Need
-    [1] = "GREED",      -- Entspricht Enum.LootRollType.Greed
-    [2] = "DISENCHANT", -- Entspricht Enum.LootRollType.Disenchant
-    [3] = "PASS",       -- Entspricht Enum.LootRollType.Pass
+    [0] = "NEED",
+    [1] = "GREED",
+    [2] = "DISENCHANT",
+    [3] = "PASS",
 }
 
 -- Erstelle einen separaten Frame nur für den Listener, um Events zu registrieren
@@ -61,14 +61,13 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
             local encounterInfo = C_LootHistory.GetInfoForEncounter(encounterID)
             local bossName = encounterInfo and encounterInfo.encounterName or "Unbekannt"
 
-            -- START NEUE LOGIK FÜR rollTypeName
             local rollTypeName = "Unbekannt"
-            local rollValue = 0 -- Initialisiere rollValue
+            local rollValue = 0
             if dropInfo.rollInfos then
                 for _, roll in ipairs(dropInfo.rollInfos) do
                     if roll.isWinner then
                         local rollType = roll.state
-                        rollValue = roll.roll -- Erfasse den Rollwert
+                        rollValue = roll.roll
                         if rollType == Enum.EncounterLootDropRollState.NeedMainSpec then
                             rollTypeName = "Need (Main Spec)"
                         elseif rollType == Enum.EncounterLootDropRollState.NeedOffSpec then
@@ -86,7 +85,6 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
                     end
                 end
             end
-            -- ENDE NEUE LOGIK FÜR rollTypeName
 
             local _, _, _, _, _, itemType, itemSubClass, _, itemEquipLoc = GetItemInfo(dropInfo.itemHyperlink)
 
@@ -114,14 +112,14 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
             -- Zusätzliche Informationen aus dropInfo.winner und erweiterte Logik für Klasse/Spezialisierung
             local playerGUID = dropInfo.winner.playerGUID or "Unbekannt"
             local playerClass = "Unbekannt"
-            local playerSpecialization = dropInfo.winner.specialization or "Unbekannt" -- Spezialisierung direkt von dropInfo.winner nehmen
+            local playerSpecialization = dropInfo.winner.specialization or "Unbekannt"
 
             -- Versuche, die Klasse über GetPlayerInfoByGUID zu ermitteln und zu lokalisieren
             if playerGUID ~= "Unbekannt" then
-                -- Korrigiert: Der ERSTE Rückgabewert von GetPlayerInfoByGUID ist die lokalisierte Klasse.
+                -- Der erste Rückgabewert von GetPlayerInfoByGUID ist die lokalisierte Klasse.
                 local locClassString, _, _, _, _, _, _ = GetPlayerInfoByGUID(playerGUID)
                 if locClassString then
-                    playerClass = locClassString -- Nimm die lokalisierte Klasse direkt
+                    playerClass = locClassString
                 end
             end
 
@@ -133,14 +131,14 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
             table.insert(LootTrackerDB[dateOnly], {
                 time = fullTime,
                 player = dropInfo.winner.playerName,
-                playerGUID = playerGUID, -- NEU: Spieler GUID
-                playerClass = playerClass, -- NEU: Spieler Klasse (lokalisiert)
-                playerSpecialization = playerSpecialization, -- NEU: Spieler Spezialisierung
+                playerGUID = playerGUID,
+                playerClass = playerClass,
+                playerSpecialization = playerSpecialization,
                 item = dropInfo.itemHyperlink,
                 itemID = itemID,
                 itemName = itemName,
                 method = rollTypeName,
-                rollValue = rollValue, -- NEU: Rollwert
+                rollValue = rollValue,
                 boss = bossName,
                 armorType = armorType,
                 slot = itemSlot,

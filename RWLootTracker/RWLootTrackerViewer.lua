@@ -24,8 +24,8 @@ local function UpdateLootDetailsText(editBox, selectedDate)
         -- Explizite Größenanpassung des EditBox an den ScrollFrame
         editBox:SetPoint("TOPLEFT", scrollBox, "TOPLEFT")
         editBox:SetPoint("BOTTOMRIGHT", scrollBox, "BOTTOMRIGHT")
-        editBox:SetWidth(scrollBox:GetWidth()) -- Beibehalten als zusätzliche Absicherung
-        editBox:SetHeight(scrollBox:GetHeight()) -- Beibehalten als zusätzliche Absicherung
+        editBox:SetWidth(scrollBox:GetWidth())
+        editBox:SetHeight(scrollBox:GetHeight())
         DebugPrint(string.format("UpdateLootDetailsText: editBox Größe nach Anpassung: %.2fx%.2f", editBox:GetWidth(), editBox:GetHeight()))
     else
         DebugPrint("UpdateLootDetailsText: scrollBox ist NIL. Kann editBox nicht anpassen.")
@@ -51,20 +51,19 @@ local function UpdateLootDetailsText(editBox, selectedDate)
             entry.time or "",
             entry.boss or "",
             entry.player or "",
-            entry.playerGUID or "",         -- NEU: Spieler GUID
-            entry.playerClass or "",        -- NEU: Spieler Klasse
-            entry.playerSpecialization or "", -- NEU: Spieler Spezialisierung
+            entry.playerGUID or "",
+            entry.playerClass or "",
+            entry.playerSpecialization or "",
             entry.item or "",
             entry.itemName or "",
             entry.itemID or "",
             entry.method or "",
-            entry.rollValue or "",          -- NEU: Rollwert
+            entry.rollValue or "",
             entry.armorType or "",
             entry.slot or ""
         ))
     end
     editBox:SetText(table.concat(lines, "\n"))
-    -- editBox:HighlightText() -- Entfernt, da nicht notwendig für die Anzeige und potenziell problematisch
 end
 
 -- Funktion zum Erstellen/Anzeigen des Loot-Details-Fensters
@@ -125,7 +124,6 @@ local function ShowLootDetailsFrame(selectedDate)
     RWLootTrackerGlobal.lootDetailsFrame.title:SetText("Beute für den " .. selectedDate)
     UpdateLootDetailsText(RWLootTrackerGlobal.lootDetailsFrame.editBox, selectedDate)
     RWLootTrackerGlobal.lootDetailsFrame:Show()
-    -- Entfernt: RWLootTrackerGlobal.lootDetailsFrame:SetFrameLevel(RWLootTrackerGlobal.lootDetailsFrame:GetFrameLevel() + 1) -- Bringt es bei jedem Aufruf nach vorne
 end
 
 -- Funktion zur Initialisierung des Kalenders
@@ -275,14 +273,6 @@ local function GenerateDebugLootData()
             -- Finde den passenden Tab-Button für das lootDatabasePanel
             for _, btn in pairs(RWLootTrackerGlobal.tabButtons) do
                 if btn.text:GetText() == "Beute Datenbank" then
-                    -- Hier muss SwitchTab auch global sein oder direkt aufgerufen werden, wenn es im selben Modul ist.
-                    -- Da SwitchTab in diesem Modul definiert ist, können wir es direkt aufrufen, wenn es in diesem Modul ist.
-                    -- Da SwitchTab in diesem Modul definiert ist, können wir es direkt aufrufen, wenn es in diesem Modul ist.
-                    -- Problem: SwitchTab ist eine lokale Funktion in CreateGUI.
-                    -- Lösung: Wir müssen es global machen, damit es von hier aus aufgerufen werden kann.
-                    -- Da dies ein Viewer-Modul ist, muss SwitchTab als Teil von RWLootTrackerGlobal verfügbar sein
-                    -- oder die Logik zum Umschalten der Tabs muss aufgerufen werden, indem man die GUI neu erstellt.
-                    -- Für die Vereinfachung machen wir SwitchTab vorerst global verfügbar.
                     RWLootTrackerGlobal.SwitchTab(btn, RWLootTrackerGlobal.lootDatabasePanel)
                     break
                 end
@@ -400,7 +390,7 @@ function RWLootTrackerGlobal.CreateGUI()
     f.title = f:CreateFontString(nil, "OVERLAY")
     f.title:SetFontObject("GameFontHighlight")
     f.title:SetPoint("LEFT", f.TitleBg, "LEFT", 5, 0)
-    f.title:SetText("RWLootTracker " .. RWLootTrackerGlobal.Version) -- Nur Addon-Name als Haupttitel
+    f.title:SetText("RWLootTracker " .. RWLootTrackerGlobal.Version)
     f.title:SetTextColor(1, 1, 1, 1)
 
     -- Hintergrundleiste für die Tabs, spanning the main frame's width
@@ -409,14 +399,14 @@ function RWLootTrackerGlobal.CreateGUI()
     tabAreaBackground:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -40)
     tabAreaBackground:SetHeight(30) -- Height of the tab area
     tabAreaBackground:SetColorTexture(0.2, 0.2, 0.2, 0.8) -- Dark grey, slightly transparent
-    tabAreaBackground:SetDrawLayer("BACKGROUND", 0) -- Use SetDrawLayer for textures on frames
+    tabAreaBackground:SetDrawLayer("BACKGROUND", 0)
 
 
     -- **Tab-System erstellen (ohne TabGroupTemplate)**
     local tabGroup = CreateFrame("Frame", nil, f) -- Einfacher Frame als Container
     tabGroup:SetPoint("TOPLEFT", tabAreaBackground, "TOPLEFT", 10, 0) -- Position relative to new background
     tabGroup:SetSize(400, 30) -- Genug Platz für die Tabs
-    tabGroup:SetFrameLevel(f:GetFrameLevel() + 2) -- Setzt den FrameLevel des tabGroup
+    tabGroup:SetFrameLevel(f:GetFrameLevel() + 2)
 
 
     -- Panels für die Tab-Inhalte
@@ -448,7 +438,6 @@ function RWLootTrackerGlobal.CreateGUI()
     settingsPanelBg:SetColorTexture(0.1, 0.1, 0.15, 0.7) -- Dezentes Dunkelblau-Grau
     settingsPanelBg:SetDrawLayer("BACKGROUND")
 
-    -- ÄNDERUNG: Call CreateSettingsPanelElements right after settingsPanel is created
     RWLootTrackerGlobal.CreateSettingsPanelElements(RWLootTrackerGlobal.settingsPanel)
 
 
@@ -468,7 +457,6 @@ function RWLootTrackerGlobal.CreateGUI()
 
         -- Den zuvor aktiven Tab-Button zurücksetzen
         if lastActiveTab then
-            -- ÄNDERUNG: Verwende einen leeren String "" anstelle von nil, um die Highlight-Textur zu entfernen
             lastActiveTab:SetHighlightTexture("")
             lastActiveTab.text:SetFontObject("GameFontNormal")
             lastActiveTab.text:SetTextColor(1, 1, 1, 1) -- Setze Textfarbe zurück auf weiß
@@ -478,9 +466,9 @@ function RWLootTrackerGlobal.CreateGUI()
         panelToShow:Show()
 
         -- Den neuen aktiven Tab-Button hervorheben
-        tabButton:SetNormalTexture("Interface\\Buttons\\UI-Panel-Tab-Unselected") -- Ausgewählte Textur
-        tabButton:SetPushedTexture("Interface\\Buttons\\UI-Panel-Tab-Selected") -- Ausgewählte Textur
-        tabButton:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Tab-Selected-Highlight", "ADD") -- Highlight hinzufügen
+        tabButton:SetNormalTexture("Interface\\Buttons\\UI-Panel-Tab-Unselected")
+        tabButton:SetPushedTexture("Interface\\Buttons\\UI-Panel-Tab-Selected")
+        tabButton:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Tab-Selected-Highlight", "ADD")
         tabButton.text:SetFontObject("GameFontHighlight")
         tabButton.text:SetTextColor(1, 1, 0, 1) -- Gelbe Farbe für den aktiven Tab-Text
 
@@ -489,9 +477,9 @@ function RWLootTrackerGlobal.CreateGUI()
 
     -- Globale Referenz zu den Tab-Buttons in der GUI-Erstellung speichern
     RWLootTrackerGlobal.tabButtons = {}
-    for i = 1, #tabs do -- Iteriere über die Anzahl der Tabs, nicht über die Tabelle selbst mit ipairs, da es Probleme geben kann.
+    for i = 1, #tabs do
         local tabInfo = tabs[i] -- Hole die Tab-Informationen
-        local tabButton = CreateFrame("Button", nil, tabGroup) -- Kein "CharacterTabButtonTemplate"
+        local tabButton = CreateFrame("Button", nil, tabGroup)
         tabButton:SetPoint("LEFT", 5 + (i - 1) * 100, 0) -- Positioniere Tabs nebeneinander
         tabButton:SetWidth(100)
         tabButton:SetHeight(30)
@@ -534,22 +522,22 @@ function RWLootTrackerGlobal.CreateGUI()
             return -- Beende die Funktion, wenn Frame-Erstellung fehlschlägt
         end
 
-        -- FIX: Kalender-Hintergrund soll vertikal das lootDatabasePanel ausfüllen und feste Breite haben.
+        -- Kalender-Hintergrund soll vertikal das lootDatabasePanel ausfüllen und feste Breite haben.
         -- Berücksichtigt den 'inset' des manuellen Rahmens, um visuelle Überlappungen zu vermeiden.
-        local calendarFrameInset = 4 -- Der gleiche 'inset' Wert, der für die Ränder verwendet wird
+        local calendarFrameInset = 4
 
         RWLootTrackerGlobal.calendarFrame:SetPoint("TOPLEFT", RWLootTrackerGlobal.lootDatabasePanel, "TOPLEFT", 15, -calendarFrameInset) -- Y-Offset nach oben für den oberen Rand
         RWLootTrackerGlobal.calendarFrame:SetPoint("BOTTOMLEFT", RWLootTrackerGlobal.lootDatabasePanel, "BOTTOMLEFT", 15, calendarFrameInset) -- Y-Offset nach unten für den unteren Rand
         RWLootTrackerGlobal.calendarFrame:SetWidth(450) -- Feste Breite für den Kalender
         
-        -- ÄNDERUNG: SetFrameLevel auf Basis des Parent, aber sicherstellen, dass es über dem Panel-Hintergrund ist.
+        -- SetFrameLevel auf Basis des Parent, aber sicherstellen, dass es über dem Panel-Hintergrund ist.
         RWLootTrackerGlobal.calendarFrame:SetFrameLevel(RWLootTrackerGlobal.lootDatabasePanel:GetFrameLevel() + 2)
         
         -- MANUELLES BACKDROP IM STIL VON LEATRIX
         local bg = RWLootTrackerGlobal.calendarFrame:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(true)
         bg:SetColorTexture(0, 0, 0, 0.7) -- Dunkler Hintergrund
-        bg:SetDrawLayer("BACKGROUND", 0) -- Sicherstellen, dass es die unterste Ebene ist
+        bg:SetDrawLayer("BACKGROUND", 0)
 
         local borderTex = "Interface/Tooltips/UI-Tooltip-Border"
         local borderSize = 16
@@ -596,13 +584,13 @@ function RWLootTrackerGlobal.CreateGUI()
         RWLootTrackerGlobal.calendarFrame.monthYearText:SetPoint("TOP", RWLootTrackerGlobal.calendarFrame, "TOP", 0, -30) -- Weiter nach unten verschoben für Header-Bereich
         RWLootTrackerGlobal.calendarFrame.monthYearText:SetText("Monat Jahr")
         RWLootTrackerGlobal.calendarFrame.monthYearText:SetTextColor(1, 1, 1, 1)
-        RWLootTrackerGlobal.calendarFrame.monthYearText:SetDrawLayer("OVERLAY") -- Text immer über dem Hintergrund
+        RWLootTrackerGlobal.calendarFrame.monthYearText:SetDrawLayer("OVERLAY")
 
 
         -- Navigationspfeile
         RWLootTrackerGlobal.calendarFrame.prevMonthButton = CreateFrame("Button", nil, RWLootTrackerGlobal.calendarFrame, "UIPanelButtonTemplate")
         RWLootTrackerGlobal.calendarFrame.prevMonthButton:SetSize(20, 20)
-        RWLootTrackerGlobal.calendarFrame.prevMonthButton:SetPoint("RIGHT", RWLootTrackerGlobal.calendarFrame.monthYearText, "LEFT", -10, 0) -- Relative Position zum Text
+        RWLootTrackerGlobal.calendarFrame.prevMonthButton:SetPoint("RIGHT", RWLootTrackerGlobal.calendarFrame.monthYearText, "LEFT", -10, 0)
         RWLootTrackerGlobal.calendarFrame.prevMonthButton:SetText("<")
         RWLootTrackerGlobal.calendarFrame.prevMonthButton:SetScript("OnClick", function()
             RWLootTrackerGlobal.currentCalendarDate.month = RWLootTrackerGlobal.currentCalendarDate.month - 1
@@ -615,7 +603,7 @@ function RWLootTrackerGlobal.CreateGUI()
 
         RWLootTrackerGlobal.calendarFrame.nextMonthButton = CreateFrame("Button", nil, RWLootTrackerGlobal.calendarFrame, "UIPanelButtonTemplate")
         RWLootTrackerGlobal.calendarFrame.nextMonthButton:SetSize(20, 20)
-        RWLootTrackerGlobal.calendarFrame.nextMonthButton:SetPoint("LEFT", RWLootTrackerGlobal.calendarFrame.monthYearText, "RIGHT", 10, 0) -- Relative Position zum Text
+        RWLootTrackerGlobal.calendarFrame.nextMonthButton:SetPoint("LEFT", RWLootTrackerGlobal.calendarFrame.monthYearText, "RIGHT", 10, 0)
         RWLootTrackerGlobal.calendarFrame.nextMonthButton:SetText(">")
         RWLootTrackerGlobal.calendarFrame.nextMonthButton:SetScript("OnClick", function()
             RWLootTrackerGlobal.currentCalendarDate.month = RWLootTrackerGlobal.currentCalendarDate.month + 1
@@ -630,55 +618,55 @@ function RWLootTrackerGlobal.CreateGUI()
         -- Wochentags-Labels
         local dayNames = {"Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"}
         RWLootTrackerGlobal.calendarFrame.dayLabels = {}
-        local columnWidth = 60 -- Einheitliche Spaltenbreite
-        local initialXOffset = 15 -- Anfangs-Offset vom linken Rand des Kalender-Hintergrunds
+        local columnWidth = 60
+        local initialXOffset = 15
 
         for i = 1, 7 do
             local label = RWLootTrackerGlobal.calendarFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            label:SetWidth(columnWidth) -- Breite des Labels auf Spaltenbreite setzen
-            label:SetJustifyH("CENTER") -- Text horizontal zentrieren
+            label:SetWidth(columnWidth)
+            label:SetJustifyH("CENTER")
             label:SetPoint("TOPLEFT", RWLootTrackerGlobal.calendarFrame, "TOPLEFT", initialXOffset + (i-1) * columnWidth, -70)
             label:SetText(dayNames[i])
-            label:SetTextColor(1, 1, 0, 1) -- Gelb für Wochentage
-            label:SetDrawLayer("OVERLAY") -- Text immer über dem Hintergrund
+            label:SetTextColor(1, 1, 0, 1)
+            label:SetDrawLayer("OVERLAY")
             RWLootTrackerGlobal.calendarFrame.dayLabels[i] = label
         end
 
         -- Kalender-Tage-Buttons (Grid)
         RWLootTrackerGlobal.calendarFrame.dayButtons = {}
         local buttonSize = 50
-        local buttonSpacing = columnWidth -- Abstand zwischen Buttons (horizontal und vertikal)
-        local startY = -110 -- Angepasster Startpunkt für Tage, um Header und Wochentags-Labels zu berücksichtigen
-        local buttonPaddingInColumn = (columnWidth - buttonSize) / 2 -- Padding, um Button in Spalte zu zentrieren
+        local buttonSpacing = columnWidth
+        local startY = -110
+        local buttonPaddingInColumn = (columnWidth - buttonSize) / 2
 
         for row = 0, 5 do -- 6 Reihen
             for col = 0, 6 do -- 7 Spalten
                 local button = CreateFrame("Button", nil, RWLootTrackerGlobal.calendarFrame)
                 button:SetSize(buttonSize, buttonSize)
                 button:SetPoint("TOPLEFT", RWLootTrackerGlobal.calendarFrame, "TOPLEFT", initialXOffset + col * buttonSpacing + buttonPaddingInColumn, startY + row * -buttonSpacing)
-                button:SetFrameLevel(RWLootTrackerGlobal.calendarFrame:GetFrameLevel() + 2) -- Ensure buttons are above calendar background
+                button:SetFrameLevel(RWLootTrackerGlobal.calendarFrame:GetFrameLevel() + 2)
                 
                 -- Hintergrund für den Button
                 button.bg = button:CreateTexture(nil, "BACKGROUND")
                 button.bg:SetAllPoints(true)
-                button.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8) -- Initial dunkler Hintergrund
-                button.bg:SetDrawLayer("BACKGROUND", 1) -- Hintergrund hinter dem Text
+                button.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+                button.bg:SetDrawLayer("BACKGROUND", 1)
 
                 -- Rahmen für den Button
                 button.border = button:CreateTexture(nil, "ARTWORK")
-                button.border:SetTexture("Interface/Common/Common-Border") -- Ein einfacher Border
+                button.border:SetTexture("Interface/Common/Common-Border")
                 button.border:SetPoint("TOPLEFT", button, "TOPLEFT", -2, 2)
                 button.border:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
                 button.border:SetBlendMode("BLEND")
-                button.border:SetColorTexture(0.5, 0.5, 0.5, 1) -- Initial grauer Rahmen
-                button.border:SetDrawLayer("ARTWORK", 0) -- Rahmen über dem Hintergrund, unter dem Text
+                button.border:SetColorTexture(0.5, 0.5, 0.5, 1)
+                button.border:SetDrawLayer("ARTWORK", 0)
 
                 -- Text (Tag-Nummer)
                 button.text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                 button.text:SetPoint("CENTER")
                 button.text:SetText("")
-                button.text:SetTextColor(1, 1, 1, 1) -- Initial weißer Text
-                button.text:SetDrawLayer("OVERLAY") -- Text immer oben
+                button.text:SetTextColor(1, 1, 1, 1)
+                button.text:SetDrawLayer("OVERLAY")
 
                 button:SetScript("OnClick", function(self)
                     if self.dateString then
@@ -691,7 +679,7 @@ function RWLootTrackerGlobal.CreateGUI()
 
         -- Aktualierungs-Button für den Kalender
         local refreshCalendarButton = CreateFrame("Button", nil, RWLootTrackerGlobal.lootDatabasePanel, "GameMenuButtonTemplate")
-        refreshCalendarButton:SetPoint("LEFT", RWLootTrackerGlobal.calendarFrame, "RIGHT", 20, 100) -- Position rechts neben dem Kalender
+        refreshCalendarButton:SetPoint("LEFT", RWLootTrackerGlobal.calendarFrame, "RIGHT", 20, 100)
         refreshCalendarButton:SetSize(180, 30)
         refreshCalendarButton:SetText("Kalender aktualisieren")
         refreshCalendarButton:SetScript("OnClick", function()
@@ -700,7 +688,7 @@ function RWLootTrackerGlobal.CreateGUI()
 
         -- Debug Datensatz Button (im RWLootTrackerGlobal.lootDatabasePanel)
         local debugButton = CreateFrame("Button", nil, RWLootTrackerGlobal.lootDatabasePanel, "GameMenuButtonTemplate")
-        debugButton:SetPoint("TOPLEFT", refreshCalendarButton, "BOTTOMLEFT", 0, -10) -- Unter dem Refresh Button
+        debugButton:SetPoint("TOPLEFT", refreshCalendarButton, "BOTTOMLEFT", 0, -10)
         debugButton:SetSize(180, 30)
         debugButton:SetText("Debug Datensatz")
         debugButton:SetFrameLevel(RWLootTrackerGlobal.lootDatabasePanel:GetFrameLevel() + 1)
@@ -710,7 +698,7 @@ function RWLootTrackerGlobal.CreateGUI()
 
         -- Neuer "Datenbank leeren" Button
         local clearDatabaseButton = CreateFrame("Button", nil, RWLootTrackerGlobal.lootDatabasePanel, "GameMenuButtonTemplate")
-        clearDatabaseButton:SetPoint("TOPLEFT", debugButton, "BOTTOMLEFT", 0, -10) -- Unter dem Debug-Button
+        clearDatabaseButton:SetPoint("TOPLEFT", debugButton, "BOTTOMLEFT", 0, -10)
         clearDatabaseButton:SetSize(180, 30)
         clearDatabaseButton:SetText("Datenbank leeren")
         clearDatabaseButton:SetFrameLevel(RWLootTrackerGlobal.lootDatabasePanel:GetFrameLevel() + 1)
@@ -723,7 +711,7 @@ function RWLootTrackerGlobal.CreateGUI()
                 function()
                     DebugPrint("Datenbank wird geleert. (Bestätigt)")
                     LootTrackerDB = {} -- Leere die Datenbank
-                    if RWLootTrackerGlobal.SaveLootData then -- Prüfung hinzugefügt
+                    if RWLootTrackerGlobal.SaveLootData then
                         RWLootTrackerGlobal.SaveLootData() -- Speichere den leeren Zustand
                     else
                         DebugPrint("FEHLER: RWLootTrackerGlobal.SaveLootData ist NIL! Daten können nicht sofort gespeichert werden.")
@@ -761,12 +749,12 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
     local configChatFrame = CreateFrame("Frame", nil, parentFrame)
     configChatFrame:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 15, -15)
     configChatFrame:SetSize(300, 30)
-    configChatFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1) -- Erhöht den FrameLevel
+    configChatFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
 
     local logToChatCheckbox = CreateFrame("CheckButton", nil, configChatFrame, "UICheckButtonTemplate")
     logToChatCheckbox:SetPoint("LEFT", configChatFrame, "LEFT", 0, 0)
     logToChatCheckbox:SetScale(1.2)
-    logToChatCheckbox:SetFrameLevel(configChatFrame:GetFrameLevel() + 1) -- Sicherstellen, dass die Checkbox über dem Frame ist
+    logToChatCheckbox:SetFrameLevel(configChatFrame:GetFrameLevel() + 1)
 
     logToChatCheckbox.text = logToChatCheckbox:CreateFontString(nil, "OVERLAY")
     logToChatCheckbox.text:SetFontObject("GameFontNormal")
@@ -786,7 +774,7 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
 
     -- Neuer Debug Mode Checkbox
     local debugModeCheckboxFrame = CreateFrame("Frame", nil, parentFrame)
-    debugModeCheckboxFrame:SetPoint("TOPLEFT", logToChatCheckbox, "BOTTOMLEFT", 0, -10) -- Unter der vorherigen Checkbox
+    debugModeCheckboxFrame:SetPoint("TOPLEFT", logToChatCheckbox, "BOTTOMLEFT", 0, -10)
     debugModeCheckboxFrame:SetSize(300, 30)
     debugModeCheckboxFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
 
@@ -812,16 +800,16 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
 
 
     local instanceTypeConfigFrame = CreateFrame("Frame", nil, parentFrame)
-    instanceTypeConfigFrame:SetPoint("TOPLEFT", debugModeCheckboxFrame, "BOTTOMLEFT", 0, -20) -- Position unter dem neuen Debug Mode Checkbox
+    instanceTypeConfigFrame:SetPoint("TOPLEFT", debugModeCheckboxFrame, "BOTTOMLEFT", 0, -20)
     instanceTypeConfigFrame:SetSize(420, 180)
-    instanceTypeConfigFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1) -- Erhöht den FrameLevel
+    instanceTypeConfigFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
 
     local instanceTypeLabel = instanceTypeConfigFrame:CreateFontString(nil, "OVERLAY")
     instanceTypeLabel:SetFontObject("GameFontNormal")
     instanceTypeLabel:SetPoint("TOPLEFT", instanceTypeConfigFrame, "TOPLEFT", 15, 5)
     instanceTypeLabel:SetText("Beute erfassen in:")
     instanceTypeLabel:SetTextColor(1, 1, 1, 1)
-    instanceTypeLabel:SetDrawLayer("OVERLAY") -- Sicherstellen, dass der Text oben ist
+    instanceTypeLabel:SetDrawLayer("OVERLAY")
     DebugPrint("Label 'Beute erfassen in:' erstellt.")
 
 
@@ -838,8 +826,8 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
     local startYCheckbox = 40
     local rowYStep = 30
 
-    for i = 1, #instanceTypeCheckboxes do -- Iteriere über die Anzahl der Checkboxen
-        local data = instanceTypeCheckboxes[i] -- Hole die Daten für die aktuelle Checkbox
+    for i = 1, #instanceTypeCheckboxes do
+        local data = instanceTypeCheckboxes[i]
         local cb = CreateFrame("CheckButton", nil, instanceTypeConfigFrame, "UICheckButtonTemplate")
         cb:SetScale(1.2)
 
@@ -853,7 +841,7 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
         y_pos = - (startYCheckbox + floor((i-1)/2) * rowYStep)
 
         cb:SetPoint("TOPLEFT", instanceTypeConfigFrame, "TOPLEFT", x_pos, y_pos)
-        cb:SetFrameLevel(instanceTypeConfigFrame:GetFrameLevel() + 2) -- Sicherstellen, dass Checkbox über Frame ist
+        cb:SetFrameLevel(instanceTypeConfigFrame:GetFrameLevel() + 2)
 
         cb.text = cb:CreateFontString(nil, "OVERLAY")
         cb.text:SetFontObject("GameFontNormal")
