@@ -14,18 +14,28 @@ end
 
 -- Hilfsfunktion, um zu überprüfen, ob die Beute in der aktuellen Instanz getrackt werden soll
 local function ShouldTrackInstance()
-    -- Sicherstellen, dass LootTrackerConfig und trackInstanceTypes existieren
-    if not LootTrackerConfig or not LootTrackerConfig.trackInstanceTypes then
-        DebugPrint("Konfiguration für Instanztypen nicht geladen.")
-        return false
-    end
-
-    local inInstance, instanceType = IsInInstance()
-
-    if inInstance then
-        return LootTrackerConfig.trackInstanceTypes[instanceType] == true
+    local inInstance, instanceType, difficultyID = IsInInstance()
+    local instanceName, instanceMapID, difficultyName, maxPlayers, isDynamic, instanceID, instanceGroupSize = GetInstanceInfo()
+    
+    if inInstance and trackedInstanceTypes[instanceType] then
+        if instanceType == "raid" then
+            if trackedRaidDifficulties[difficultyID] then
+                DebugPrint(string.format("Instanz verfolgen: %s (%s, %s)", instanceName, difficultyName, instanceType))
+                return true
+            else
+                DebugPrint(string.format("Instanz NICHT verfolgen: %s (%s). Schwierigkeitsgrad nicht aktiviert.", instanceName, difficultyName))
+                return false
+            end
+        else
+            DebugPrint(string.format("Instanz verfolgen: %s (%s)", instanceName, instanceType))
+            return true
+        end
+    elseif not inInstance and trackedInstanceTypes.none then
+        DebugPrint("Instanz verfolgen: Offene Welt (none)")
+        return true
     else
-        return LootTrackerConfig.trackInstanceTypes.none == true
+        DebugPrint(string.format("Instanz NICHT verfolgen: Instanztyp '%s' nicht aktiviert.", instanceType or "none"))
+        return false
     end
 end
 
@@ -36,6 +46,13 @@ local ROLL_TYPE_MAPPING = {
     [1] = "GREED",
     [2] = "DISENCHANT",
     [3] = "PASS",
+}
+
+local trackedRaidDifficulties = {
+    [14] = false,  -- LFR
+    [15] = true,  -- Normal
+    [16] = true,  -- Heroisch
+    [17] = true,  -- Mythisch
 }
 
 -- Erstelle einen separaten Frame nur für den Listener, um Events zu registrieren

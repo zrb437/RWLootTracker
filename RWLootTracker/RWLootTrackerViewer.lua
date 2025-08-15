@@ -42,7 +42,7 @@ local function UpdateLootDetailsText(editBox, selectedDate)
         -- Keine Header-Zeile hinzufügen, wenn keine Daten vorhanden sind
     else
         -- Aktualisierter Header mit neuen Feldern
-        table.insert(lines, "Zeit\tBoss\tSpieler\tGUID\tKlasse\tSpezialisierung\tGegenstand\tItemname\tItemID\tRollart\tRollwert\tRüstungstyp\tSlot")
+        --table.insert(lines, "Zeit\tBoss\tSpieler\tGUID\tKlasse\tSpezialisierung\tGegenstand\tItemname\tItemID\tRollart\tRollwert\tRüstungstyp\tSlot")
     end
 
     for _, entry in ipairs(entriesToDisplay) do

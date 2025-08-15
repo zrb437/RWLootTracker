@@ -16,7 +16,7 @@ LootTrackerConfig = LootTrackerConfig or {} -- Wird unten durch ApplyDefaults in
 LootTrackerDB = LootTrackerDB or {}
 
 -- Versionsnummer des Addons (jetzt global über RWLootTrackerGlobal verfügbar)
-RWLootTrackerGlobal.Version = "0.2.9"
+RWLootTrackerGlobal.Version = "0.3.0"
 
 -- Standardkonfiguration für das Addon
 local defaults = {
