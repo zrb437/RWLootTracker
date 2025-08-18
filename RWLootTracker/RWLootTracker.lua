@@ -1,99 +1,65 @@
 -- RWLootTracker.lua
--- Dies ist die Haupt-Initialisierungsdatei des Addons.
--- Sie definiert globale Variablen, Event-Handler und zentrale Funktionen.
-
--- Globale Referenz für Addon-Funktionen und -Daten.
--- Dies wird von allen anderen Modulen verwendet, um miteinander zu kommunizieren.
 RWLootTrackerGlobal = RWLootTrackerGlobal or {}
 
--- Standardkonfiguration des Addons.
--- Diese Tabelle wird von WoW automatisch gespeichert und geladen (siehe .toc-Datei).
--- Neue Einstellungen sollten hier mit ihren Standardwerten hinzugefügt werden.
-LootTrackerConfig = LootTrackerConfig or {} -- Wird unten durch ApplyDefaults initialisiert
+
+LootTrackerConfig = LootTrackerConfig or {}
 
 -- Addon-Datenbank für Beute-Einträge
 -- Die Struktur wird jetzt sein: LootTrackerDB[Datum_String] = { {Beute-Eintrag 1}, {Beute-Eintrag 2}, ... }
 LootTrackerDB = LootTrackerDB or {}
 
--- Versionsnummer des Addons (jetzt global über RWLootTrackerGlobal verfügbar)
+
 RWLootTrackerGlobal.Version = "0.3.0"
 
--- Standardkonfiguration für das Addon
+
 local defaults = {
     DebugMode = false, -- Aktiviert zusätzliche Debug-Ausgaben im Chat
     LogToChat = true,  -- Sendet Beute-Meldungen an den Chat
-    trackInstanceTypes = { -- Welche Instanztypen getrackt werden sollen
-        raid = true,
-        party = false,    -- Dungeons/Gruppen
-        pvp = false,      -- Schlachtfelder/Arenen
-        scenario = false, -- Szenarien
-        none = false,     -- Offene Welt / Weltbosse (wenn keine Instanz)
-    },
+    AddTableHeader = true,
     trackedRaidDifficulties = {
-        [14] = true,  -- Normal
-        [15] = true,  -- Heroisch
-        [16] = true,  -- Mythisch
-        [17] = false,  -- LFR
+        ["NHC"] = true,  -- 14
+        ["HC"] = true,  -- 15
+        ["MYTHIC"] = true,  -- 16
+        ["LFR"] = false,  -- 17
     },
 }
 
--- Hilfsfunktion für Debug-Ausgaben
--- Diese Funktion prüft den DebugMode in LootTrackerConfig, um Ausgaben zu steuern.
+
 local function DebugPrint(msg)
-    -- Sicherstellen, dass LootTrackerConfig und DebugMode existieren, bevor darauf zugegriffen wird
+
     if LootTrackerConfig and LootTrackerConfig.DebugMode then
         print("RWLootTracker.lua: " .. msg)
     end
 end
 
--- Funktion zum rekursiven Anwenden von Standardwerten.
--- Dies stellt sicher, dass alle Untertabellen und Werte aus 'defaults' in 'targetTable' vorhanden sind,
--- wenn sie dort nicht bereits definiert sind.
+
 local function ApplyDefaults(targetTable, defaultTable)
     for k, v in pairs(defaultTable) do
         if type(v) == "table" then
-            -- Wenn der Standardwert eine Tabelle ist, und der Zielwert keine Tabelle ist,
-            -- oder nicht existiert, erstelle eine leere Tabelle im Ziel und rufe rekursiv auf.
             if type(targetTable[k]) ~= "table" then
                 targetTable[k] = {}
             end
-            ApplyDefaults(targetTable[k], v) -- Rekursiver Aufruf für verschachtelte Tabellen
+            ApplyDefaults(targetTable[k], v) 
         elseif targetTable[k] == nil then
-            -- Wenn der Schlüssel im Ziel nicht existiert, setze den Standardwert
             targetTable[k] = v
         end
     end
 end
 
--- Globale Referenzen für GUI-Elemente, die von RWLootTrackerViewer.lua gesetzt werden.
--- Diese müssen hier deklariert werden, damit sie auch in den anderen Skripten global zugänglich sind.
--- Sie werden später in RWLootTrackerViewer.lua mit den tatsächlichen Frame-Objekten befüllt.
--- Sie werden jetzt als Felder von RWLootTrackerGlobal behandelt.
-RWLootTrackerGlobal.lootTrackerFrame = nil        -- Haupt-Addon-Frame
-RWLootTrackerGlobal.lootDatabasePanel = nil       -- Panel für die Beute-Datenbank
-RWLootTrackerGlobal.settingsPanel = nil           -- Panel für die Einstellungen
-RWLootTrackerGlobal.tabButtons = {}               -- Tabelle der Tab-Buttons
-RWLootTrackerGlobal.calendarFrame = nil           -- Neuer Frame für den Kalender
-RWLootTrackerGlobal.currentCalendarDate = date("*t") -- Aktuelles Datum des Kalenders (tabelle)
-RWLootTrackerGlobal.lootDetailsFrame = nil        -- Neues Frame für die Beute-Details
 
--- Funktion: RWLootTrackerGlobal.SaveLootData
--- Diese Funktion ist dafür vorgesehen, eine Speicherung der Addon-Daten auszulösen.
--- Da LootTrackerConfig und LootTrackerDB in der .toc-Datei als SavedVariables deklariert sind,
--- werden sie von WoW automatisch beim Beenden des Spiels oder Neuladen des UIs gespeichert.
--- Ein expliziter Aufruf dieser Funktion ist nur notwendig, wenn eine sofortige Speicherung
--- nach einer wichtigen Datenänderung (z.B. dem Leeren der Datenbank) erzwungen werden soll,
--- bevor der automatische Speichermechanismus greift.
--- Es gibt keine direkte WoW API-Funktion wie `SaveVariable("MyVariable")`.
--- Stattdessen nutzt man den internen Mechanismus über das Addon-Objekt.
+RWLootTrackerGlobal.lootTrackerFrame = nil        
+RWLootTrackerGlobal.lootDatabasePanel = nil       
+RWLootTrackerGlobal.settingsPanel = nil           
+RWLootTrackerGlobal.tabButtons = {}               
+RWLootTrackerGlobal.calendarFrame = nil           
+RWLootTrackerGlobal.currentCalendarDate = date("*t") 
+RWLootTrackerGlobal.lootDetailsFrame = nil        
+
 function RWLootTrackerGlobal.SaveLootData()
     DebugPrint("SaveLootData: Speicherung der Beutedaten ausgelöst.")
-    
-    -- Überprüfen, ob das Addon-Objekt verfügbar ist, um SaveVariables aufzurufen.
-    -- Dies ist eine gängige Methode, um SavedVariables sofort zu speichern.
-    local addon = _G["RWLootTracker"] -- Holt das Addon-Objekt (Registriert über RegisterAddon in WoW)
+    local addon = _G["RWLootTracker"]
     if addon and addon.SaveVariables then
-        addon:SaveVariables() -- Ruft die Speichermethode des Addons auf
+        addon:SaveVariables()
         DebugPrint("SaveLootData: Addon-Variablen über SaveVariables() gespeichert.")
     else
         DebugPrint("SaveLootData: Addon-Objekt oder SaveVariables() nicht gefunden. Automatische Speicherung durch WoW wird erwartet.")
@@ -101,31 +67,163 @@ function RWLootTrackerGlobal.SaveLootData()
 end
 
 
--- Erstelle den Haupt-Frame, um Events zu registrieren
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_LOGIN") -- Für die Konfigurationsinitialisierung bei jedem Login
+function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
+    ApplyDefaults(LootTrackerConfig, defaults)
 
--- Setze das Skript, um Events zu behandeln
-frame:SetScript("OnEvent", function(self, event, ...)
-    if event == "PLAYER_LOGIN" then
-        -- Stelle sicher, dass LootTrackerConfig korrekt mit Standardwerten initialisiert ist
-        ApplyDefaults(LootTrackerConfig, defaults)
-        print("RWLootTracker geladen und bereit (Version " .. RWLootTrackerGlobal.Version .. ").")
+    local configChatFrame = CreateFrame("Frame", nil, parentFrame)
+    configChatFrame:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -15)
+    configChatFrame:SetSize(300, 30)
+    configChatFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
+
+    local generalLabel = configChatFrame:CreateFontString(nil, "OVERLAY")
+    generalLabel:SetFontObject("GameFontHighlightLarge")
+    generalLabel:SetPoint("TOPLEFT", configChatFrame, "TOPLEFT", 0, 5)
+    generalLabel:SetText("Rangeln Worldwide Loot Tracker")
+    generalLabel:SetTextColor(1, 1, 1, 1)
+    generalLabel:SetDrawLayer("OVERLAY")
+
+    local logToChatCheckbox = CreateFrame("CheckButton", nil, configChatFrame, "UICheckButtonTemplate")
+    logToChatCheckbox:SetPoint("LEFT", generalLabel, "LEFT", 15, -30)
+    logToChatCheckbox:SetFrameLevel(configChatFrame:GetFrameLevel() + 1)
+
+    logToChatCheckbox.text = logToChatCheckbox:CreateFontString(nil, "OVERLAY")
+    logToChatCheckbox.text:SetFontObject("GameFontNormal")
+    logToChatCheckbox.text:SetPoint("LEFT", logToChatCheckbox, "RIGHT", 5, 0)
+    logToChatCheckbox.text:SetText("Meldungen an Chat senden")
+    logToChatCheckbox.text:SetTextColor(1, 1, 1, 1)
+    logToChatCheckbox.text:SetDrawLayer("OVERLAY")
+
+    logToChatCheckbox:SetChecked(LootTrackerConfig.LogToChat)
+
+    logToChatCheckbox:SetScript("OnClick", function(self)
+        LootTrackerConfig.LogToChat = self:GetChecked()
+        DebugPrint("'Meldungen an Chat senden' auf " .. tostring(LootTrackerConfig.LogToChat) .. " gesetzt.")
+    end)
+
+    local debugModeCheckboxFrame = CreateFrame("Frame", nil, parentFrame)
+    debugModeCheckboxFrame:SetPoint("TOPLEFT", logToChatCheckbox, "BOTTOMLEFT", 0, -10)
+    debugModeCheckboxFrame:SetSize(300, 30)
+    debugModeCheckboxFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
+
+    local debugModeCheckbox = CreateFrame("CheckButton", nil, debugModeCheckboxFrame, "UICheckButtonTemplate")
+    debugModeCheckbox:SetPoint("LEFT", debugModeCheckboxFrame, "LEFT", 0, 0)
+    debugModeCheckbox:SetFrameLevel(debugModeCheckboxFrame:GetFrameLevel() + 1)
+
+    debugModeCheckbox.text = debugModeCheckbox:CreateFontString(nil, "OVERLAY")
+    debugModeCheckbox.text:SetFontObject("GameFontNormal")
+    debugModeCheckbox.text:SetPoint("LEFT", debugModeCheckbox, "RIGHT", 5, 0)
+    debugModeCheckbox.text:SetText("Debug Mode")
+    debugModeCheckbox.text:SetTextColor(1, 1, 1, 1)
+    debugModeCheckbox.text:SetDrawLayer("OVERLAY")
+
+    debugModeCheckbox:SetChecked(LootTrackerConfig.DebugMode)
+
+    debugModeCheckbox:SetScript("OnClick", function(self)
+        LootTrackerConfig.DebugMode = self:GetChecked()
+        DebugPrint("'Debug Mode' auf " .. tostring(LootTrackerConfig.DebugMode) .. " gesetzt.")
+    end)
+
+    local addTableHeaderCheckboxFrame = CreateFrame("Frame", nil, parentFrame)
+    addTableHeaderCheckboxFrame:SetPoint("TOPLEFT", debugModeCheckbox, "BOTTOMLEFT", 0, -10)
+    addTableHeaderCheckboxFrame:SetSize(300, 30)
+    addTableHeaderCheckboxFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
+
+    local addTableHeaderCheckbox = CreateFrame("CheckButton", nil, addTableHeaderCheckboxFrame, "UICheckButtonTemplate")
+    addTableHeaderCheckbox:SetPoint("LEFT", addTableHeaderCheckboxFrame, "LEFT", 0, 0)
+    addTableHeaderCheckbox:SetFrameLevel(addTableHeaderCheckboxFrame:GetFrameLevel() + 1)
+
+    addTableHeaderCheckbox.text = addTableHeaderCheckbox:CreateFontString(nil, "OVERLAY")
+    addTableHeaderCheckbox.text:SetFontObject("GameFontNormal")
+    addTableHeaderCheckbox.text:SetPoint("LEFT", addTableHeaderCheckbox, "RIGHT", 5, 0)
+    addTableHeaderCheckbox.text:SetText("Kopfzeile in Tabelle anzeigen")
+    addTableHeaderCheckbox.text:SetTextColor(1, 1, 1, 1)
+    addTableHeaderCheckbox.text:SetDrawLayer("OVERLAY")
+
+    addTableHeaderCheckbox:SetChecked(LootTrackerConfig.AddTableHeader)
+
+    addTableHeaderCheckbox:SetScript("OnClick", function(self)
+        LootTrackerConfig.AddTableHeader = self:GetChecked()
+        DebugPrint("'Add Table Header' auf " .. tostring(LootTrackerConfig.AddTableHeader) .. " gesetzt.")
+    end)
+
+    local raidDifficultyConfig = CreateFrame("Frame", nil, parentFrame)
+    raidDifficultyConfig:SetPoint("TOPLEFT", addTableHeaderCheckbox, "BOTTOMLEFT", 0, -20)
+    raidDifficultyConfig:SetSize(420, 180)
+    raidDifficultyConfig:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
+
+    local raidDifficultyLabel = raidDifficultyConfig:CreateFontString(nil, "OVERLAY")
+    raidDifficultyLabel:SetFontObject("GameFontNormalLarge")
+    raidDifficultyLabel:SetPoint("TOPLEFT", raidDifficultyConfig, "TOPLEFT", 0, 5)
+    raidDifficultyLabel:SetText("Beute erfassen in:")
+    raidDifficultyLabel:SetTextColor(1, 1, 1, 1)
+    raidDifficultyLabel:SetDrawLayer("OVERLAY")
+
+    local raidDifficultiesCheckboxes = {
+        { key = "LFR", text = "LFR" },
+        { key = "NHC", text = "Normal Raid" },
+        { key = "HC", text = "HC Raid" },
+        { key = "MYTHIC", text = "Mythic Raid" },
+    }
+
+    local col1X = 15
+    local col2X = 215
+    local startYCheckbox = 20
+    local rowYStep = 30
+
+    for i = 1, #raidDifficultiesCheckboxes do
+        local data = raidDifficultiesCheckboxes[i]
+        local cb = CreateFrame("CheckButton", nil, raidDifficultyConfig, "UICheckButtonTemplate")
+
+        local x_pos, y_pos
+        if (i - 1) % 2 == 0 then
+            x_pos = col1X
+        else
+            x_pos = col2X
+        end
+        
+        y_pos = - (startYCheckbox + floor((i-1)/2) * rowYStep)
+
+        cb:SetPoint("TOPLEFT", raidDifficultyConfig, "TOPLEFT", x_pos, y_pos)
+        cb:SetFrameLevel(raidDifficultyConfig:GetFrameLevel() + 2)
+
+        cb.text = cb:CreateFontString(nil, "OVERLAY")
+        cb.text:SetFontObject("GameFontNormal")
+        cb.text:SetPoint("LEFT", cb, "RIGHT", 5, 0)
+        cb.text:SetText(data.text)
+        cb.text:SetTextColor(1, 1, 1, 1)
+        cb.text:SetDrawLayer("OVERLAY")
+
+        cb:SetChecked(LootTrackerConfig.trackedRaidDifficulties[data.key])
+
+        cb:SetScript("OnClick", function(self)
+            LootTrackerConfig.trackedRaidDifficulties[data.key] = self:GetChecked()
+            DebugPrint("Verfolgung für '" .. data.text .. "' auf " .. tostring(LootTrackerConfig.trackedRaidDifficulties[data.key]) .. " gesetzt.")
+        end)
     end
+end
+
+
+RWLootTrackerGlobal.settingsPanel = CreateFrame("Frame", nil, UIParent)
+RWLootTrackerGlobal.settingsPanel.name = "RW Loot Tracker"
+
+local category = Settings.RegisterCanvasLayoutCategory(RWLootTrackerGlobal.settingsPanel, RWLootTrackerGlobal.settingsPanel.name)
+Settings.RegisterAddOnCategory(category)
+
+RWLootTrackerGlobal.settingsPanel:SetScript("OnShow", function(self)
+	RWLootTrackerGlobal.CreateSettingsPanelElements(self)
 end)
 
 
--- **Slash-Befehle registrieren**
 SLASH_RWLOOTTRACKER1 = "/rwloottracker"
 SLASH_RWLOOTTRACKER2 = "/rwl"
 
 SlashCmdList["RWLOOTTRACKER"] = function(msg)
-    -- Hier wird die Funktion aus RWLootTrackerViewer.lua aufgerufen
     if RWLootTrackerGlobal.CreateGUI and type(RWLootTrackerGlobal.CreateGUI) == "function" then
         RWLootTrackerGlobal.CreateGUI()
     else
         print("RWLootTracker: GUI-Modul nicht geladen oder CreateGUI-Funktion nicht verfügbar. Bitte Addon neuladen.")
     end
 end
+
 
 DebugPrint("Core-Modul RWLootTracker.lua geladen. Version " .. RWLootTrackerGlobal.Version .. ".")

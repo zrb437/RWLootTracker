@@ -1,26 +1,33 @@
 -- Dies ist die Listener-Datei, die sich um die Beute-Events kütert.
 
--- Zugriff auf globale Addon-Datenbank und Konfiguration
--- LootTrackerDB und LootTrackerConfig werden von RWLootTracker.lua global definiert
--- und sollten hier direkt verfügbar sein.
 
--- Hilfsfunktion für Debug-Ausgaben
 local function DebugPrint(msg)
-    -- Sicherstellen, dass LootTrackerConfig und DebugMode existieren, bevor darauf zugegriffen wird
     if LootTrackerConfig and LootTrackerConfig.DebugMode then
         print("RWLootTracker: " .. msg)
     end
 end
 
--- Hilfsfunktion, um zu überprüfen, ob die Beute in der aktuellen Instanz getrackt werden soll
 local function ShouldTrackInstance()
     local inInstance, instanceType = IsInInstance()
     local instanceName, instanceMapID, difficultyName, maxPlayers, isDynamic, instanceID, instanceGroupSize = GetInstanceInfo()
     
-    if inInstance and trackedInstanceTypes[instanceType] then
+    if inInstance then
         if instanceType == "raid" then
-            if LootTrackerConfig.trackedRaidDifficulties[difficultyName] then
-                DebugPrint(string.format("Instanz verfolgen: %s (%s, %s)", instanceName, difficultyName, instanceType))
+            local instanceDifficulty = nil
+            if difficultyName == 14 then
+                instanceDifficulty = "NHC"
+            elseif difficultyName == 15 then
+                instanceDifficulty = "HC"
+            elseif difficultyName == 16 then
+                instanceDifficulty = "MYTHIC"
+            elseif difficultyName == 17 then
+                instanceDifficulty = "LFR"
+            else
+                instanceDifficulty = "unknown"
+            end
+            
+            if LootTrackerConfig.trackedRaidDifficulties[instanceDifficulty] then
+                DebugPrint(string.format("Instanz verfolgen: %s (%s, %s) %s", instanceName, difficultyName, instanceType, instanceDifficulty))
                 return true
             else
                 DebugPrint(string.format("Instanz NICHT verfolgen: %s (%s). Schwierigkeitsgrad nicht aktiviert.", instanceName, difficultyName))
@@ -30,44 +37,25 @@ local function ShouldTrackInstance()
             DebugPrint(string.format("Instanz verfolgen: %s (%s)", instanceName, instanceType))
             return true
         end
-    elseif not inInstance and trackedInstanceTypes.none then
-        DebugPrint("Instanz verfolgen: Offene Welt (none)")
-        return true
     else
-        DebugPrint(string.format("Instanz NICHT verfolgen: Instanztyp '%s' nicht aktiviert.", instanceType or "none"))
         return false
     end
 end
 
--- Zuordnung von Enum.LootRollType-Werten (Zahlen) zu ihren String-Namen
--- Wird hier beibehalten, auch wenn eine detailliertere Logik für rollTypeName verwendet wird.
-local ROLL_TYPE_MAPPING = {
-    [0] = "NEED",
-    [1] = "GREED",
-    [2] = "DISENCHANT",
-    [3] = "PASS",
-}
-
-
-
--- Erstelle einen separaten Frame nur für den Listener, um Events zu registrieren
 local listenerFrame = CreateFrame("Frame")
 listenerFrame:RegisterEvent("LOOT_HISTORY_UPDATE_DROP")
 
--- Setze das Skript, um Events zu behandeln
 listenerFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "LOOT_HISTORY_UPDATE_DROP" then
         local encounterID, lootListID = ...
 
         DebugPrint("Loot gefunden, prüfe Schwierigkeitsgrad...")
 
-        -- Nur Drops verarbeiten, wenn die aktuelle Instanz getrackt werden soll
         if not ShouldTrackInstance() then return end
 
         DebugPrint("Schwierigkeitsgrad gültig, verarbeite Loot...")
 
         local dropInfo = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
-        -- Stelle sicher, dass dropInfo und Item-Hyperlink gültig sind
         if not dropInfo or not dropInfo.itemHyperlink then return end
 
         if dropInfo.winner then

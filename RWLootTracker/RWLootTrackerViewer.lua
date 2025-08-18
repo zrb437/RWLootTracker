@@ -1,18 +1,11 @@
--- Dies ist die Viewer-Datei, die sich um die Darstellung der GUI kümmert.
 
--- Zugriff auf globale Addon-Datenbank und Konfiguration
--- LootTrackerDB, LootTrackerConfig, RWLootTrackerGlobal und dessen Felder
--- lootTrackerFrame, settingsPanel, tabButtons, calendarFrame, currentCalendarDate, lootDetailsFrame
--- werden von RWLootTracker.lua global definiert.
-
--- Hilfsfunktion für Debug-Ausgaben
 local function DebugPrint(msg)
     if LootTrackerConfig.DebugMode then
         print("RWLootTracker: " .. msg)
     end
 end
 
--- Hilfsfunktion, um die exportierten Daten zu aktualisieren (für das Loot-Details-Fenster)
+
 local function UpdateLootDetailsText(editBox, selectedDate)
     DebugPrint("UpdateLootDetailsText: selectedDate erhalten: " .. tostring(selectedDate))
     if not editBox then DebugPrint("UpdateLootDetailsText: FEHLER: editBox ist NIL!") return end
@@ -21,7 +14,7 @@ local function UpdateLootDetailsText(editBox, selectedDate)
 
     local scrollBox = editBox:GetParent()
     if scrollBox then
-        -- Explizite Größenanpassung des EditBox an den ScrollFrame
+
         editBox:SetPoint("TOPLEFT", scrollBox, "TOPLEFT")
         editBox:SetPoint("BOTTOMRIGHT", scrollBox, "BOTTOMRIGHT")
         editBox:SetWidth(scrollBox:GetWidth())
@@ -33,20 +26,17 @@ local function UpdateLootDetailsText(editBox, selectedDate)
     DebugPrint(string.format("UpdateLootDetailsText: scrollBox Größe: %.2fx%.2f", scrollBox:GetWidth(), scrollBox:GetHeight()))
 
 
-    local lines = {} -- Initialisiere lines als leere Tabelle
+    local lines = {}
     local entriesToDisplay = LootTrackerDB[selectedDate] or {}
 
     DebugPrint("UpdateLootDetailsText: Anzahl der Einträge für " .. selectedDate .. ": " .. #entriesToDisplay)
     if #entriesToDisplay == 0 then
         DebugPrint("UpdateLootDetailsText: Keine Daten gefunden für " .. selectedDate .. ". LootTrackerDB[" .. selectedDate .. "] ist leer oder nil.")
-        -- Keine Header-Zeile hinzufügen, wenn keine Daten vorhanden sind
-    else
-        -- Aktualisierter Header mit neuen Feldern
-        --table.insert(lines, "Zeit\tBoss\tSpieler\tGUID\tKlasse\tSpezialisierung\tGegenstand\tItemname\tItemID\tRollart\tRollwert\tRüstungstyp\tSlot")
+    elseif LootTrackerConfig.AddTableHeader then
+        table.insert(lines, "Zeit\tBoss\tSpieler\tGUID\tKlasse\tSpezialisierung\tGegenstand\tItemname\tItemID\tRollart\tRollwert\tRüstungstyp\tSlot")
     end
 
     for _, entry in ipairs(entriesToDisplay) do
-        -- Aktualisierte Formatierung für jede Zeile mit neuen Feldern
         table.insert(lines, string.format('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s',
             entry.time or "",
             entry.boss or "",
@@ -66,7 +56,7 @@ local function UpdateLootDetailsText(editBox, selectedDate)
     editBox:SetText(table.concat(lines, "\n"))
 end
 
--- Funktion zum Erstellen/Anzeigen des Loot-Details-Fensters
+
 local function ShowLootDetailsFrame(selectedDate)
     DebugPrint("ShowLootDetailsFrame aufgerufen für Datum: " .. tostring(selectedDate))
     if not RWLootTrackerGlobal.lootDetailsFrame then
@@ -78,9 +68,9 @@ local function ShowLootDetailsFrame(selectedDate)
         f:RegisterForDrag("LeftButton")
         f:SetScript("OnDragStart", f.StartMoving)
         f:SetScript("OnDragStop", f.StopMovingOrSizing)
-        f:SetFrameStrata("TOOLTIP") -- Geändert zu TOOLTIP für höchste Sichtbarkeit
-        f:SetFrameLevel(100) -- Hoher Level innerhalb des TOOLTIP Strata, um immer oben zu sein
-        f:SetClampedToScreen(true) -- Sicherstellen, dass das Fenster auf dem Bildschirm bleibt
+        f:SetFrameStrata("TOOLTIP") 
+        f:SetFrameLevel(100) 
+        f:SetClampedToScreen(true) 
 
         f.title = f:CreateFontString(nil, "OVERLAY")
         f.title:SetFontObject("GameFontHighlight")
@@ -88,30 +78,27 @@ local function ShowLootDetailsFrame(selectedDate)
         f.title:SetText("Beute für den " .. selectedDate)
         f.title:SetTextColor(1, 1, 1, 1)
 
-        -- Korrigierte Positionierung des Close Buttons für BasicFrameTemplateWithInset
-        -- NICHT explizit SetPoint aufrufen, der Template sollte es handhaben
         f.CloseButton:SetScript("OnClick", function() f:Hide() end)
 
 
         local scrollBox = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
-        scrollBox:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -45)
-        scrollBox:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -25, 15)
+        scrollBox:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -30)
+        scrollBox:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -35, 15)
         scrollBox:SetFrameLevel(f:GetFrameLevel() + 1)
         
         local editBox = CreateFrame("EditBox", nil, scrollBox)
         editBox:SetMultiLine(true)
         editBox:SetFontObject(ChatFontNormal)
         editBox:SetAutoFocus(false)
-        -- Setzt die EditBox, um den gesamten ScrollFrame-Bereich abzudecken
+
         editBox:SetPoint("TOPLEFT", scrollBox, "TOPLEFT")
         editBox:SetPoint("BOTTOMRIGHT", scrollBox, "BOTTOMRIGHT")
         editBox:SetMaxBytes(1000000)
-        editBox:SetJustifyH("LEFT") -- Stellt sicher, dass der Text linksbündig ist
-        editBox:SetJustifyV("TOP") -- Stellt sicher, dass der Text am oberen Rand beginnt
+        editBox:SetJustifyH("LEFT")
+        editBox:SetJustifyV("TOP")
         scrollBox:SetScrollChild(editBox)
-        f.editBox = editBox -- Referenz für UpdateLootDetailsText
+        f.editBox = editBox
 
-        -- Explizite Größenanpassung des EditBox an den ScrollFrame nach der Initialisierung
         editBox:SetWidth(scrollBox:GetWidth())
         editBox:SetHeight(scrollBox:GetHeight())
         DebugPrint(string.format("ShowLootDetailsFrame: editBox Größe nach Initialisierung: %.2fx%.2f", editBox:GetWidth(), editBox:GetHeight()))
@@ -126,9 +113,8 @@ local function ShowLootDetailsFrame(selectedDate)
     RWLootTrackerGlobal.lootDetailsFrame:Show()
 end
 
--- Funktion zur Initialisierung des Kalenders
+
 function RWLootTrackerGlobal.InitializeCalendar()
-    -- Debug-Ausgabe: Prüfen, ob calendarFrame existiert, bevor darauf zugegriffen wird
     if not RWLootTrackerGlobal.calendarFrame then
         DebugPrint("RWLootTrackerGlobal.InitializeCalendar: calendarFrame ist NIL. Kann Kalender nicht initialisieren.")
         return
@@ -137,15 +123,11 @@ function RWLootTrackerGlobal.InitializeCalendar()
     local year = RWLootTrackerGlobal.currentCalendarDate.year
     local month = RWLootTrackerGlobal.currentCalendarDate.month
 
-    -- Setze den Titel des Kalenders
     RWLootTrackerGlobal.calendarFrame.monthYearText:SetText(date("%B %Y", time{year=year, month=month, day=1, hour=0, min=0, sec=0}))
 
-    -- Hilfsfunktion, um den ersten Wochentag des Monats zu erhalten (0=Sonntag, 1=Montag...)
-    -- Lua date() gibt 1 für Sonntag, 2 für Montag usw. zurück.
     local function GetFirstWeekdayOfMonth(year, month)
         local t = time{year=year, month=month, day=1, hour=0, min=0, sec=0}
-        local weekday = tonumber(date("%w", t)) -- 0 für Sonntag, 1 für Montag, ... 6 für Samstag. Konvertiere zu Zahl.
-        -- Passe an, um 1 für Montag, 7 für Sonntag zu haben
+        local weekday = tonumber(date("%w", t))
         return (weekday == 0) and 7 or weekday
     end
 
@@ -268,16 +250,6 @@ local function GenerateDebugLootData()
     -- Nach dem Generieren der Daten, Kalender aktualisieren, falls das GUI offen ist
     if RWLootTrackerGlobal.lootTrackerFrame and RWLootTrackerGlobal.lootTrackerFrame:IsVisible() then
         RWLootTrackerGlobal.InitializeCalendar()
-        -- Wenn der Debug-Button in den Einstellungen gedrückt wurde, wechsel zur "Beute Datenbank"
-        if RWLootTrackerGlobal.settingsPanel and RWLootTrackerGlobal.settingsPanel:IsVisible() then
-            -- Finde den passenden Tab-Button für das lootDatabasePanel
-            for _, btn in pairs(RWLootTrackerGlobal.tabButtons) do
-                if btn.text:GetText() == "Beute Datenbank" then
-                    RWLootTrackerGlobal.SwitchTab(btn, RWLootTrackerGlobal.lootDatabasePanel)
-                    break
-                end
-            end
-        end
     end
 end
 
@@ -366,9 +338,6 @@ function RWLootTrackerGlobal.CreateGUI()
         return
     end
 
-    -- Initialisiere DebugMode, wenn noch nicht geschehen (z.B. bei erster GUI-Erstellung)
-    LootTrackerConfig.DebugMode = LootTrackerConfig.DebugMode or false
-
     local f = CreateFrame("Frame", "LootTrackerFrame", UIParent, "BasicFrameTemplateWithInset")
     DebugPrint("RWLootTrackerGlobal.CreateGUI: lootTrackerFrame (f) nach CreateFrame: " .. tostring(f))
     if not f then
@@ -393,21 +362,6 @@ function RWLootTrackerGlobal.CreateGUI()
     f.title:SetText("RWLootTracker " .. RWLootTrackerGlobal.Version)
     f.title:SetTextColor(1, 1, 1, 1)
 
-    -- Hintergrundleiste für die Tabs, spanning the main frame's width
-    local tabAreaBackground = f:CreateTexture(nil, "BACKGROUND")
-    tabAreaBackground:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -40) -- Start below title bar, adjust Y
-    tabAreaBackground:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -40)
-    tabAreaBackground:SetHeight(30) -- Height of the tab area
-    tabAreaBackground:SetColorTexture(0.2, 0.2, 0.2, 0.8) -- Dark grey, slightly transparent
-    tabAreaBackground:SetDrawLayer("BACKGROUND", 0)
-
-
-    -- **Tab-System erstellen (ohne TabGroupTemplate)**
-    local tabGroup = CreateFrame("Frame", nil, f) -- Einfacher Frame als Container
-    tabGroup:SetPoint("TOPLEFT", tabAreaBackground, "TOPLEFT", 10, 0) -- Position relative to new background
-    tabGroup:SetSize(400, 30) -- Genug Platz für die Tabs
-    tabGroup:SetFrameLevel(f:GetFrameLevel() + 2)
-
 
     -- Panels für die Tab-Inhalte
     RWLootTrackerGlobal.lootDatabasePanel = CreateFrame("Frame", nil, f)
@@ -416,7 +370,7 @@ function RWLootTrackerGlobal.CreateGUI()
         DebugPrint("FEHLER: lootDatabasePanel ist NIL nach CreateFrame!")
         return -- Beende die Funktion, wenn Frame-Erstellung fehlschlägt
     end
-    RWLootTrackerGlobal.lootDatabasePanel:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -70) -- Unter den Tabs
+    RWLootTrackerGlobal.lootDatabasePanel:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -45) -- Unter den Tabs
     RWLootTrackerGlobal.lootDatabasePanel:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -15, 15) -- Bis zum unteren Rand
     RWLootTrackerGlobal.lootDatabasePanel:SetFrameLevel(f:GetFrameLevel() + 1)
     -- Hintergrund für lootDatabasePanel
@@ -425,89 +379,7 @@ function RWLootTrackerGlobal.CreateGUI()
     lootDatabasePanelBg:SetColorTexture(0.1, 0.1, 0.15, 0.7) -- Dezentes Dunkelblau-Grau
     lootDatabasePanelBg:SetDrawLayer("BACKGROUND")
 
-
-    RWLootTrackerGlobal.settingsPanel = CreateFrame("Frame", nil, f)
-    RWLootTrackerGlobal.settingsPanel:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -70)
-    RWLootTrackerGlobal.settingsPanel:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -15, 15)
-    RWLootTrackerGlobal.settingsPanel:SetFrameLevel(f:GetFrameLevel() + 1)
-    RWLootTrackerGlobal.settingsPanel:Hide() -- Standardmäßig verstecken
-
-    -- Hintergrund für das settingsPanel
-    local settingsPanelBg = RWLootTrackerGlobal.settingsPanel:CreateTexture(nil, "BACKGROUND")
-    settingsPanelBg:SetAllPoints(true)
-    settingsPanelBg:SetColorTexture(0.1, 0.1, 0.15, 0.7) -- Dezentes Dunkelblau-Grau
-    settingsPanelBg:SetDrawLayer("BACKGROUND")
-
-    RWLootTrackerGlobal.CreateSettingsPanelElements(RWLootTrackerGlobal.settingsPanel)
-
-
-    -- Tabs definieren und zur Tab-Gruppe hinzufügen
-    local tabs = {
-        { name = "Beute Datenbank", panel = RWLootTrackerGlobal.lootDatabasePanel },
-        { name = "Einstellungen", panel = RWLootTrackerGlobal.settingsPanel },
-    }
-
-    local lastActiveTab = nil -- Speichert den zuletzt aktiven Tab-Button
-
-    -- Machen Sie SwitchTab global über RWLootTrackerGlobal
-    function RWLootTrackerGlobal.SwitchTab(tabButton, panelToShow)
-        -- Alle Panels verstecken
-        RWLootTrackerGlobal.lootDatabasePanel:Hide()
-        RWLootTrackerGlobal.settingsPanel:Hide()
-
-        -- Den zuvor aktiven Tab-Button zurücksetzen
-        if lastActiveTab then
-            lastActiveTab:SetHighlightTexture("")
-            lastActiveTab.text:SetFontObject("GameFontNormal")
-            lastActiveTab.text:SetTextColor(1, 1, 1, 1) -- Setze Textfarbe zurück auf weiß
-        end
-
-        -- Das ausgewählte Panel zeigen
-        panelToShow:Show()
-
-        -- Den neuen aktiven Tab-Button hervorheben
-        tabButton:SetNormalTexture("Interface\\Buttons\\UI-Panel-Tab-Unselected")
-        tabButton:SetPushedTexture("Interface\\Buttons\\UI-Panel-Tab-Selected")
-        tabButton:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Tab-Selected-Highlight", "ADD")
-        tabButton.text:SetFontObject("GameFontHighlight")
-        tabButton.text:SetTextColor(1, 1, 0, 1) -- Gelbe Farbe für den aktiven Tab-Text
-
-        lastActiveTab = tabButton -- Den aktuellen Tab als letzten aktiven speichern
-    end
-
-    -- Globale Referenz zu den Tab-Buttons in der GUI-Erstellung speichern
-    RWLootTrackerGlobal.tabButtons = {}
-    for i = 1, #tabs do
-        local tabInfo = tabs[i] -- Hole die Tab-Informationen
-        local tabButton = CreateFrame("Button", nil, tabGroup)
-        tabButton:SetPoint("LEFT", 5 + (i - 1) * 100, 0) -- Positioniere Tabs nebeneinander
-        tabButton:SetWidth(100)
-        tabButton:SetHeight(30)
-        
-        -- Textur für den Tab-Button
-        tabButton:SetNormalTexture("Interface\\Buttons\\UI-Panel-Tab-Unselected")
-        tabButton:SetPushedTexture("Interface\\Buttons\\UI-Panel-Tab-Selected")
-        tabButton:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Tab-Selected-Highlight", "ADD")
-
-        -- Font für den Tab-Text
-        tabButton.text = tabButton:CreateFontString(nil, "OVERLAY")
-        tabButton.text:SetFontObject("GameFontNormal")
-        tabButton.text:SetPoint("CENTER")
-        tabButton.text:SetText(tabInfo.name)
-        tabButton.text:SetTextColor(1, 1, 1, 1)
-
-        tabButton:SetID(i)
-
-        tabButton:SetScript("OnClick", function(self)
-            RWLootTrackerGlobal.SwitchTab(self, tabInfo.panel) -- Panel wechseln und Tab-Button hervorheben
-        end)
-        table.insert(RWLootTrackerGlobal.tabButtons, tabButton) -- Verwende table.insert, um die Buttons zu speichern
-    end
-
-    -- Standardmäßig den ersten Tab auswählen und das zugehörige Panel anzeigen
-    if RWLootTrackerGlobal.tabButtons[1] then
-        RWLootTrackerGlobal.SwitchTab(RWLootTrackerGlobal.tabButtons[1], tabs[1].panel)
-    end
+    RWLootTrackerGlobal.lootDatabasePanel:Show() -- Sicherstellen, dass das Panel sichtbar ist
 
 
     -- === Elemente für "Beute Datenbank" Tab (RWLootTrackerGlobal.lootDatabasePanel) - Jetzt mit Kalender ===
@@ -740,124 +612,6 @@ function RWLootTrackerGlobal.CreateGUI()
 
     -- Initialisiere das Bestätigungs-Popup beim Erstellen der GUI
     RWLootTrackerGlobal.InitializeConfirmDialog()
-end
-
--- === Elemente für "Einstellungen" Tab (RWLootTrackerGlobal.settingsPanel) ===
--- Diese Funktion wird einmal aufgerufen, wenn der Slash-Befehl zum ersten Mal ausgeführt wird
-function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
-    -- Da parentFrame hier RWLootTrackerGlobal.settingsPanel ist, können wir dies direkt direkt verwenden.
-    local configChatFrame = CreateFrame("Frame", nil, parentFrame)
-    configChatFrame:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 15, -15)
-    configChatFrame:SetSize(300, 30)
-    configChatFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
-
-    local logToChatCheckbox = CreateFrame("CheckButton", nil, configChatFrame, "UICheckButtonTemplate")
-    logToChatCheckbox:SetPoint("LEFT", configChatFrame, "LEFT", 0, 0)
-    logToChatCheckbox:SetScale(1.2)
-    logToChatCheckbox:SetFrameLevel(configChatFrame:GetFrameLevel() + 1)
-
-    logToChatCheckbox.text = logToChatCheckbox:CreateFontString(nil, "OVERLAY")
-    logToChatCheckbox.text:SetFontObject("GameFontNormal")
-    logToChatCheckbox.text:SetPoint("LEFT", logToChatCheckbox, "RIGHT", 5, 0)
-    logToChatCheckbox.text:SetText("Meldungen an Chat senden")
-    logToChatCheckbox.text:SetTextColor(1, 1, 1, 1)
-    logToChatCheckbox.text:SetDrawLayer("OVERLAY")
-
-    logToChatCheckbox:SetChecked(LootTrackerConfig.LogToChat)
-
-    logToChatCheckbox:SetScript("OnClick", function(self)
-        LootTrackerConfig.LogToChat = self:GetChecked()
-        DebugPrint("'Meldungen an Chat senden' auf " .. tostring(LootTrackerConfig.LogToChat) .. " gesetzt.")
-    end)
-    DebugPrint("Checkbox 'Meldungen an Chat senden' erstellt.")
-
-
-    -- Neuer Debug Mode Checkbox
-    local debugModeCheckboxFrame = CreateFrame("Frame", nil, parentFrame)
-    debugModeCheckboxFrame:SetPoint("TOPLEFT", logToChatCheckbox, "BOTTOMLEFT", 0, -10)
-    debugModeCheckboxFrame:SetSize(300, 30)
-    debugModeCheckboxFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
-
-    local debugModeCheckbox = CreateFrame("CheckButton", nil, debugModeCheckboxFrame, "UICheckButtonTemplate")
-    debugModeCheckbox:SetPoint("LEFT", debugModeCheckboxFrame, "LEFT", 0, 0)
-    debugModeCheckbox:SetScale(1.2)
-    debugModeCheckbox:SetFrameLevel(debugModeCheckboxFrame:GetFrameLevel() + 1)
-
-    debugModeCheckbox.text = debugModeCheckbox:CreateFontString(nil, "OVERLAY")
-    debugModeCheckbox.text:SetFontObject("GameFontNormal")
-    debugModeCheckbox.text:SetPoint("LEFT", debugModeCheckbox, "RIGHT", 5, 0)
-    debugModeCheckbox.text:SetText("Debug Mode")
-    debugModeCheckbox.text:SetTextColor(1, 1, 1, 1)
-    debugModeCheckbox.text:SetDrawLayer("OVERLAY")
-
-    debugModeCheckbox:SetChecked(LootTrackerConfig.DebugMode)
-
-    debugModeCheckbox:SetScript("OnClick", function(self)
-        LootTrackerConfig.DebugMode = self:GetChecked()
-        DebugPrint("'Debug Mode' auf " .. tostring(LootTrackerConfig.DebugMode) .. " gesetzt.")
-    end)
-    DebugPrint("Checkbox 'Debug Mode' erstellt.")
-
-
-    local instanceTypeConfigFrame = CreateFrame("Frame", nil, parentFrame)
-    instanceTypeConfigFrame:SetPoint("TOPLEFT", debugModeCheckboxFrame, "BOTTOMLEFT", 0, -20)
-    instanceTypeConfigFrame:SetSize(420, 180)
-    instanceTypeConfigFrame:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
-
-    local instanceTypeLabel = instanceTypeConfigFrame:CreateFontString(nil, "OVERLAY")
-    instanceTypeLabel:SetFontObject("GameFontNormal")
-    instanceTypeLabel:SetPoint("TOPLEFT", instanceTypeConfigFrame, "TOPLEFT", 15, 5)
-    instanceTypeLabel:SetText("Beute erfassen in:")
-    instanceTypeLabel:SetTextColor(1, 1, 1, 1)
-    instanceTypeLabel:SetDrawLayer("OVERLAY")
-    DebugPrint("Label 'Beute erfassen in:' erstellt.")
-
-
-    local instanceTypeCheckboxes = {
-        { key = "raid", text = "Raids" },
-        { key = "party", text = "Dungeons/Gruppen" },
-        { key = "scenario", text = "Szenarien" },
-        { key = "pvp", text = "PvP-Inhalt" },
-        { key = "none", text = "Offene Welt" },
-    }
-
-    local col1X = 15
-    local col2X = 215
-    local startYCheckbox = 40
-    local rowYStep = 30
-
-    for i = 1, #instanceTypeCheckboxes do
-        local data = instanceTypeCheckboxes[i]
-        local cb = CreateFrame("CheckButton", nil, instanceTypeConfigFrame, "UICheckButtonTemplate")
-        cb:SetScale(1.2)
-
-        local x_pos, y_pos
-        if (i - 1) % 2 == 0 then
-            x_pos = col1X
-        else
-            x_pos = col2X
-        end
-        
-        y_pos = - (startYCheckbox + floor((i-1)/2) * rowYStep)
-
-        cb:SetPoint("TOPLEFT", instanceTypeConfigFrame, "TOPLEFT", x_pos, y_pos)
-        cb:SetFrameLevel(instanceTypeConfigFrame:GetFrameLevel() + 2)
-
-        cb.text = cb:CreateFontString(nil, "OVERLAY")
-        cb.text:SetFontObject("GameFontNormal")
-        cb.text:SetPoint("LEFT", cb, "RIGHT", 5, 0)
-        cb.text:SetText(data.text)
-        cb.text:SetTextColor(1, 1, 1, 1)
-        cb.text:SetDrawLayer("OVERLAY")
-
-        cb:SetChecked(LootTrackerConfig.trackInstanceTypes[data.key])
-
-        cb:SetScript("OnClick", function(self)
-            LootTrackerConfig.trackInstanceTypes[data.key] = self:GetChecked()
-            DebugPrint("Verfolgung für '" .. data.text .. "' auf " .. tostring(LootTrackerConfig.trackInstanceTypes[data.key]) .. " gesetzt.")
-        end)
-        DebugPrint(string.format("Created instance type checkbox for %s at %.2f, %.2f. Checked: %s", data.text, cb:GetLeft(), cb:GetTop(), tostring(LootTrackerConfig.trackInstanceTypes[data.key])))
-    end
 end
 
 DebugPrint("Viewer-Modul geladen (Version " .. RWLootTrackerGlobal.Version .. ").")
