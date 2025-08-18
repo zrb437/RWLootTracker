@@ -29,6 +29,12 @@ local defaults = {
         scenario = false, -- Szenarien
         none = false,     -- Offene Welt / Weltbosse (wenn keine Instanz)
     },
+    trackedRaidDifficulties = {
+        [14] = true,  -- Normal
+        [15] = true,  -- Heroisch
+        [16] = true,  -- Mythisch
+        [17] = false,  -- LFR
+    },
 }
 
 -- Hilfsfunktion für Debug-Ausgaben

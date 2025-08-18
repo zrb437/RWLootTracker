@@ -14,12 +14,12 @@ end
 
 -- Hilfsfunktion, um zu überprüfen, ob die Beute in der aktuellen Instanz getrackt werden soll
 local function ShouldTrackInstance()
-    local inInstance, instanceType, difficultyID = IsInInstance()
+    local inInstance, instanceType = IsInInstance()
     local instanceName, instanceMapID, difficultyName, maxPlayers, isDynamic, instanceID, instanceGroupSize = GetInstanceInfo()
     
     if inInstance and trackedInstanceTypes[instanceType] then
         if instanceType == "raid" then
-            if trackedRaidDifficulties[difficultyID] then
+            if LootTrackerConfig.trackedRaidDifficulties[difficultyName] then
                 DebugPrint(string.format("Instanz verfolgen: %s (%s, %s)", instanceName, difficultyName, instanceType))
                 return true
             else
@@ -48,12 +48,7 @@ local ROLL_TYPE_MAPPING = {
     [3] = "PASS",
 }
 
-local trackedRaidDifficulties = {
-    [14] = false,  -- LFR
-    [15] = true,  -- Normal
-    [16] = true,  -- Heroisch
-    [17] = true,  -- Mythisch
-}
+
 
 -- Erstelle einen separaten Frame nur für den Listener, um Events zu registrieren
 local listenerFrame = CreateFrame("Frame")
@@ -64,8 +59,12 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "LOOT_HISTORY_UPDATE_DROP" then
         local encounterID, lootListID = ...
 
+        DebugPrint("Loot gefunden, prüfe Schwierigkeitsgrad...")
+
         -- Nur Drops verarbeiten, wenn die aktuelle Instanz getrackt werden soll
         if not ShouldTrackInstance() then return end
+
+        DebugPrint("Schwierigkeitsgrad gültig, verarbeite Loot...")
 
         local dropInfo = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
         -- Stelle sicher, dass dropInfo und Item-Hyperlink gültig sind
