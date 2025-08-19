@@ -189,81 +189,6 @@ function RWLootTrackerGlobal.InitializeCalendar()
     end
 end
 
--- Funktion zum Initialisieren des Bestätigungs-Popups einmalig
-function RWLootTrackerGlobal.InitializeConfirmDialog()
-    DebugPrint("InitializeConfirmDialog: Dialog-Frame initialisiert.")
-    local dialog = CreateFrame("Frame", "LootTrackerConfirmDialog", UIParent, "BasicFrameTemplateWithInset")
-    dialog:SetSize(350, 180)
-    dialog:SetPoint("CENTER")
-    dialog:SetFrameStrata("TOOLTIP") -- Höchste Sichtbarkeit
-    dialog:SetFrameLevel(100) -- Hoher Level innerhalb der Strata
-    dialog:SetMovable(true)
-    dialog:EnableMouse(true)
-    dialog:RegisterForDrag("LeftButton")
-    dialog:SetScript("OnDragStart", dialog.StartMoving)
-    dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
-    dialog:Hide() -- Initial ausblenden
-
-    dialog.titleText = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    dialog.titleText:SetPoint("TOP", dialog, "TOP", 0, -10)
-    dialog.titleText:SetTextColor(1, 1, 1, 1)
-
-    dialog.messageText = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    dialog.messageText:SetPoint("TOPLEFT", dialog, "TOPLEFT", 25, -60)
-    dialog.messageText:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -25, -60)
-    dialog.messageText:SetJustifyH("CENTER")
-    dialog.messageText:SetJustifyV("TOP")
-    dialog.messageText:SetTextColor(1, 1, 1, 1)
-    dialog.messageText:SetMaxLines(5)
-
-    dialog.confirmButton = CreateFrame("Button", nil, dialog, "GameMenuButtonTemplate")
-    dialog.confirmButton:SetSize(80, 25)
-    dialog.confirmButton:SetPoint("BOTTOM", dialog, "BOTTOM", -45, 25)
-    dialog.confirmButton:SetText("Ja")
-
-    dialog.cancelButton = CreateFrame("Button", nil, dialog, "GameMenuButtonTemplate")
-    dialog.cancelButton:SetSize(80, 25)
-    dialog.cancelButton:SetPoint("BOTTOM", dialog, "BOTTOM", 45, 25)
-    dialog.cancelButton:SetText("Nein")
-    
-
-    RWLootTrackerGlobal.confirmDialog = dialog -- Globale Referenz speichern
-end
-
--- Funktion zum Anzeigen des Bestätigungs-Popups mit dynamischen Funktionen
-function RWLootTrackerGlobal.ShowConfirmDialog(title, message, onConfirmCallback, onCancelCallback)
-    DebugPrint("ShowConfirmDialog: Popup anzeigen für '" .. title .. "'")
-    local dialog = RWLootTrackerGlobal.confirmDialog
-    if not dialog then
-        DebugPrint("ShowConfirmDialog: FEHLER: ConfirmDialog nicht initialisiert. Rufe InitializeConfirmDialog auf.")
-        RWLootTrackerGlobal.InitializeConfirmDialog()
-        dialog = RWLootTrackerGlobal.confirmDialog
-        if not dialog then
-            DebugPrint("ShowConfirmDialog: FEHLER: ConfirmDialog konnte auch nach Initialisierung nicht erstellt werden.")
-            return
-        end
-    end
-
-    dialog.titleText:SetText(title)
-    dialog.messageText:SetText(message)
-
-    dialog.confirmButton:SetScript("OnClick", function()
-        DebugPrint("ConfirmDialog: Ja geklickt.")
-        dialog:Hide() -- Popup ausblenden
-        if onConfirmCallback then onConfirmCallback() end -- Aktion ausführen
-    end)
-
-    dialog.cancelButton:SetScript("OnClick", function()
-        DebugPrint("ConfirmDialog: Nein geklickt.")
-        dialog:Hide() -- Popup ausblenden
-        if onCancelCallback then onCancelCallback() end -- Aktion ausführen
-    end)
-
-    dialog:Show()
-    DebugPrint("ShowConfirmDialog: Popup Show() aufgerufen.")
-end
-
-
 -- Hauptfunktion zum Erstellen der GUI
 function RWLootTrackerGlobal.CreateGUI()
     if RWLootTrackerGlobal.lootTrackerFrame then
@@ -279,7 +204,7 @@ function RWLootTrackerGlobal.CreateGUI()
         return -- Beende die Funktion, wenn Frame-Erstellung fehlschlägt
     end
 
-    f:SetSize(710, 600) -- Hauptfenster-Höhe und -Breite angepasst
+    f:SetSize(700, 600) -- Hauptfenster-Höhe und -Breite angepasst
     f:SetPoint("CENTER")
     f:SetMovable(true)
     f:EnableMouse(true)
@@ -292,7 +217,7 @@ function RWLootTrackerGlobal.CreateGUI()
 
     f.title = f:CreateFontString(nil, "OVERLAY")
     f.title:SetFontObject("GameFontHighlight")
-    f.title:SetPoint("LEFT", f.TitleBg, "LEFT", 5, 0)
+    f.title:SetPoint("LEFT", f.TitleBg, "LEFT", 15, 0)
     f.title:SetText("RWLootTracker " .. RWLootTrackerGlobal.Version)
     f.title:SetTextColor(1, 1, 1, 1)
 
@@ -303,7 +228,7 @@ function RWLootTrackerGlobal.CreateGUI()
         DebugPrint("FEHLER: lootDatabasePanel ist NIL nach CreateFrame!")
         return -- Beende die Funktion, wenn Frame-Erstellung fehlschlägt
     end
-    RWLootTrackerGlobal.lootDatabasePanel:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -45) -- Unter den Tabs
+    RWLootTrackerGlobal.lootDatabasePanel:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -30) -- Unter den Tabs
     RWLootTrackerGlobal.lootDatabasePanel:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -15, 15) -- Bis zum unteren Rand
     RWLootTrackerGlobal.lootDatabasePanel:SetFrameLevel(f:GetFrameLevel() + 1)
     -- Hintergrund für lootDatabasePanel
@@ -331,8 +256,8 @@ function RWLootTrackerGlobal.CreateGUI()
         -- Berücksichtigt den 'inset' des manuellen Rahmens, um visuelle Überlappungen zu vermeiden.
         local calendarFrameInset = 4
 
-        RWLootTrackerGlobal.calendarFrame:SetPoint("TOPLEFT", RWLootTrackerGlobal.lootDatabasePanel, "TOPLEFT", 15, -calendarFrameInset) -- Y-Offset nach oben für den oberen Rand
-        RWLootTrackerGlobal.calendarFrame:SetPoint("BOTTOMLEFT", RWLootTrackerGlobal.lootDatabasePanel, "BOTTOMLEFT", 15, calendarFrameInset) -- Y-Offset nach unten für den unteren Rand
+        RWLootTrackerGlobal.calendarFrame:SetPoint("TOPLEFT", RWLootTrackerGlobal.lootDatabasePanel, "TOPLEFT", 0, -calendarFrameInset) -- Y-Offset nach oben für den oberen Rand
+        RWLootTrackerGlobal.calendarFrame:SetPoint("BOTTOMLEFT", RWLootTrackerGlobal.lootDatabasePanel, "BOTTOMLEFT", 0, calendarFrameInset) -- Y-Offset nach unten für den unteren Rand
         RWLootTrackerGlobal.calendarFrame:SetWidth(450) -- Feste Breite für den Kalender
         
         -- SetFrameLevel auf Basis des Parent, aber sicherstellen, dass es über dem Panel-Hintergrund ist.
@@ -481,32 +406,24 @@ function RWLootTrackerGlobal.CreateGUI()
                 table.insert(RWLootTrackerGlobal.calendarFrame.dayButtons, button)
             end
         end
-
-        -- Neuer "Datenbank leeren" Button
-        local clearDatabaseButton = CreateFrame("Button", nil, RWLootTrackerGlobal.lootDatabasePanel, "GameMenuButtonTemplate")
-        clearDatabaseButton:SetPoint("TOPLEFT", RWLootTrackerGlobal.calendarFrame, "BOTTOMLEFT", 0, -10)
-        clearDatabaseButton:SetSize(180, 30)
-        clearDatabaseButton:SetText("Datenbank leeren")
-        clearDatabaseButton:SetFrameLevel(RWLootTrackerGlobal.lootDatabasePanel:GetFrameLevel() + 1)
-        clearDatabaseButton:SetScript("OnClick", function()
-            DebugPrint("Datenbank leeren button clicked.")
-            -- Rufe die neue globale ShowConfirmDialog-Funktion auf
-            RWLootTrackerGlobal.ShowConfirmDialog(
-                "Datenbank leeren",
-                "Wollen Sie Ihre Datenbank wirklich leeren? Alle Daten werden unwiderruflich gelöscht.",
-                function()
-                    DebugPrint("Datenbank wird geleert. (Bestätigt)")
-                    LootTrackerDB = {} -- Leere die Datenbank
-                    RWLootTrackerGlobal.InitializeCalendar() -- Kalender aktualisieren, um die leeren Daten anzuzeigen
-                    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[RWLootTracker]|r Die Beutedatenbank wurde erfolgreich geleert.")
-                end,
-                function()
-                    DebugPrint("Datenbank leeren abgebrochen. (Abgelehnt)")
-                    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[RWLootTracker]|r Das Leeren der Beutedatenbank wurde abgebrochen.")
-                end
-            )
-        end)
-
+        
+		local rangelnLabel = RWLootTrackerGlobal.lootDatabasePanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge2")
+		rangelnLabel:SetPoint("TOPRIGHT", RWLootTrackerGlobal.lootDatabasePanel, "TOPRIGHT", -10, -20)
+		rangelnLabel:SetText("Rangeln Worldwide")
+		rangelnLabel:SetTextColor(1, 1, 1, 1)
+		rangelnLabel:SetWidth(190)
+		
+		local lootTrackerLabel = RWLootTrackerGlobal.lootDatabasePanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+		lootTrackerLabel:SetPoint("TOPRIGHT", RWLootTrackerGlobal.lootDatabasePanel, "TOPRIGHT", -10, -80)
+		lootTrackerLabel:SetText("Loot Tracker")
+		lootTrackerLabel:SetTextColor(1, 1, 1, 1)
+		lootTrackerLabel:SetWidth(190)
+		
+        local logoTexture = RWLootTrackerGlobal.lootDatabasePanel:CreateTexture(nil, "ARTWORK")
+        logoTexture:SetTexture("Interface/AddOns/RWLootTracker/media/rwl_lass_rangeln.png")
+        logoTexture:SetSize(200, 200)
+        logoTexture:SetPoint("TOPRIGHT", RWLootTrackerGlobal.lootDatabasePanel, "TOPRIGHT", -10, -200)
+        
     else
         DebugPrint("lootDatabasePanel ist NIL, Kalender wird nicht erstellt.")
     end

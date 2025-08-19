@@ -57,6 +57,79 @@ RWLootTrackerGlobal.calendarFrame = nil
 RWLootTrackerGlobal.currentCalendarDate = date("*t") 
 RWLootTrackerGlobal.lootDetailsFrame = nil        
 
+-- Funktion zum Initialisieren des Bestätigungs-Popups einmalig
+function RWLootTrackerGlobal.InitializeConfirmDialog()
+    DebugPrint("InitializeConfirmDialog: Dialog-Frame initialisiert.")
+    local dialog = CreateFrame("Frame", "LootTrackerConfirmDialog", UIParent, "BasicFrameTemplateWithInset")
+    dialog:SetSize(350, 180)
+    dialog:SetPoint("CENTER")
+    dialog:SetFrameStrata("TOOLTIP") -- Höchste Sichtbarkeit
+    dialog:SetFrameLevel(100) -- Hoher Level innerhalb der Strata
+    dialog:SetMovable(true)
+    dialog:EnableMouse(true)
+    dialog:RegisterForDrag("LeftButton")
+    dialog:SetScript("OnDragStart", dialog.StartMoving)
+    dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
+    dialog:Hide() -- Initial ausblenden
+
+    dialog.titleText = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    dialog.titleText:SetPoint("TOP", dialog, "TOP", 0, -5)
+    dialog.titleText:SetTextColor(1, 1, 1, 1)
+
+    dialog.messageText = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    dialog.messageText:SetPoint("TOPLEFT", dialog, "TOPLEFT", 25, -60)
+    dialog.messageText:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -25, -60)
+    dialog.messageText:SetJustifyH("CENTER")
+    dialog.messageText:SetJustifyV("TOP")
+    dialog.messageText:SetTextColor(1, 0, 0, 1)
+    dialog.messageText:SetMaxLines(5)
+
+    dialog.confirmButton = CreateFrame("Button", nil, dialog, "GameMenuButtonTemplate")
+    dialog.confirmButton:SetSize(80, 25)
+    dialog.confirmButton:SetPoint("BOTTOM", dialog, "BOTTOM", -45, 25)
+    dialog.confirmButton:SetText("Ja")
+
+    dialog.cancelButton = CreateFrame("Button", nil, dialog, "GameMenuButtonTemplate")
+    dialog.cancelButton:SetSize(80, 25)
+    dialog.cancelButton:SetPoint("BOTTOM", dialog, "BOTTOM", 45, 25)
+    dialog.cancelButton:SetText("Nein")
+    
+
+    RWLootTrackerGlobal.confirmDialog = dialog -- Globale Referenz speichern
+end
+
+function RWLootTrackerGlobal.ShowConfirmDialog(title, message, onConfirmCallback, onCancelCallback)
+    DebugPrint("ShowConfirmDialog: Popup anzeigen für '" .. title .. "'")
+    local dialog = RWLootTrackerGlobal.confirmDialog
+    if not dialog then
+        DebugPrint("ShowConfirmDialog: FEHLER: ConfirmDialog nicht initialisiert. Rufe InitializeConfirmDialog auf.")
+        RWLootTrackerGlobal.InitializeConfirmDialog()
+        dialog = RWLootTrackerGlobal.confirmDialog
+        if not dialog then
+            DebugPrint("ShowConfirmDialog: FEHLER: ConfirmDialog konnte auch nach Initialisierung nicht erstellt werden.")
+            return
+        end
+    end
+
+    dialog.titleText:SetText(title)
+    dialog.messageText:SetText(message)
+
+    dialog.confirmButton:SetScript("OnClick", function()
+        DebugPrint("ConfirmDialog: Ja geklickt.")
+        dialog:Hide() -- Popup ausblenden
+        if onConfirmCallback then onConfirmCallback() end -- Aktion ausführen
+    end)
+
+    dialog.cancelButton:SetScript("OnClick", function()
+        DebugPrint("ConfirmDialog: Nein geklickt.")
+        dialog:Hide() -- Popup ausblenden
+        if onCancelCallback then onCancelCallback() end -- Aktion ausführen
+    end)
+
+    dialog:Show()
+    DebugPrint("ShowConfirmDialog: Popup Show() aufgerufen.")
+end
+
 
 function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
     ApplyDefaults(LootTrackerConfig, defaults)
@@ -223,7 +296,7 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
 
     local raidDifficultyConfig = CreateFrame("Frame", nil, parentFrame)
     raidDifficultyConfig:SetPoint("TOPLEFT", guildNameFrame, "BOTTOMLEFT", 0, -20)
-    raidDifficultyConfig:SetSize(420, 180)
+    raidDifficultyConfig:SetSize(420, 100)
     raidDifficultyConfig:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
 
     local raidDifficultyLabel = raidDifficultyConfig:CreateFontString(nil, "OVERLAY")
@@ -274,6 +347,30 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
             LootTrackerConfig.trackedRaidDifficulties[data.key] = self:GetChecked()
             DebugPrint("Verfolgung für '" .. data.text .. "' auf " .. tostring(LootTrackerConfig.trackedRaidDifficulties[data.key]) .. " gesetzt.")
         end)
+
+        local clearDatabaseButton = CreateFrame("Button", nil, raidDifficultyConfig, "GameMenuButtonTemplate")
+        clearDatabaseButton:SetPoint("TOPLEFT", raidDifficultyConfig, "BOTTOMLEFT", 0, 0)
+        clearDatabaseButton:SetSize(180, 30)
+        clearDatabaseButton:SetText("Datenbank leeren")
+        clearDatabaseButton:SetScript("OnClick", function()
+            DebugPrint("Datenbank leeren button clicked.")
+            -- Rufe die neue globale ShowConfirmDialog-Funktion auf
+            RWLootTrackerGlobal.ShowConfirmDialog(
+                "Datenbank leeren",
+                "Wollen Sie Ihre Datenbank wirklich leeren? Alle Daten werden unwiderruflich gelöscht.",
+                function()
+                    DebugPrint("Datenbank wird geleert. (Bestätigt)")
+                    LootTrackerDB = {} -- Leere die Datenbank
+                    RWLootTrackerGlobal.InitializeCalendar() -- Kalender aktualisieren, um die leeren Daten anzuzeigen
+                    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[RWLootTracker]|r Die Beutedatenbank wurde erfolgreich geleert.")
+                end,
+                function()
+                    DebugPrint("Datenbank leeren abgebrochen. (Abgelehnt)")
+                    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[RWLootTracker]|r Das Leeren der Beutedatenbank wurde abgebrochen.")
+                end
+            )
+        end)
+        
     end
 end
 
