@@ -57,21 +57,9 @@ RWLootTrackerGlobal.calendarFrame = nil
 RWLootTrackerGlobal.currentCalendarDate = date("*t") 
 RWLootTrackerGlobal.lootDetailsFrame = nil        
 
-function RWLootTrackerGlobal.SaveLootData()
-    DebugPrint("SaveLootData: Speicherung der Beutedaten ausgelöst.")
-    local addon = _G["RWLootTracker"]
-    if addon and addon.SaveVariables then
-        addon:SaveVariables()
-        DebugPrint("SaveLootData: Addon-Variablen über SaveVariables() gespeichert.")
-    else
-        DebugPrint("SaveLootData: Addon-Objekt oder SaveVariables() nicht gefunden. Automatische Speicherung durch WoW wird erwartet.")
-    end
-end
-
 
 function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
     ApplyDefaults(LootTrackerConfig, defaults)
-
     local configChatFrame = CreateFrame("Frame", nil, parentFrame)
     configChatFrame:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -15)
     configChatFrame:SetSize(300, 30)

@@ -7,16 +7,40 @@ local function DebugPrint(msg)
     end
 end
 
+local function GetRaidLeaderGuild()
+    DebugPrint("Checking Raid Group")
+    for i = 1, GetNumGroupMembers() do
+        local name = GetRaidRosterInfo(i)
+        if name and UnitIsGroupLeader(name) then
+            DebugPrint(string.format("Found group leader: %s", name))
+            local guildName = GetGuildInfo(name)
+            
+            if guildName then
+                DebugPrint(string.format("Found Guild name: %s", guildName))
+                return guildName
+            end
+        end
+    end
+    return nil
+end
+
+local function IsRaidLeaderInGuild()
+    local guildName = GetRaidLeaderGuild()
+    if guildName and guildName == LootTrackerConfig.guildName then
+        DebugPrint("Der Raidleiter ist Mitglied von '" .. LootTrackerConfig.guildName .. "'.")
+        return true
+    else
+        DebugPrint("Der Raidleiter ist NICHT Mitglied von '" .. LootTrackerConfig.guildName .. "'.")
+        return false
+    end
+end
+
 local function ShouldTrackInstance()
     local inInstance, instanceType = IsInInstance()
     local instanceName, instanceMapID, difficultyName, maxPlayers, isDynamic, instanceID, instanceGroupSize = GetInstanceInfo()
     
     if inInstance then
-        local validLeader = true
-        if LootTrackerConfig.checkRaidLeader then
-            validLeader = IsRaidLeaderInGuild()
-        end
-        if instanceType == "raid" and validLeader then
+        if instanceType == "raid" then
             local instanceDifficulty = nil
             if difficultyName == 14 then
                 instanceDifficulty = "NHC"
@@ -38,35 +62,11 @@ local function ShouldTrackInstance()
                 return false
             end
         else
-            DebugPrint(string.format("Instanz verfolgen: %s (%s)", instanceName, instanceType))
-            return true
+            DebugPrint(string.format("Instanz nicht verfolgen: %s (%s)", instanceName, instanceType))
+            return false
         end
     else
-        return false
-    end
-end
-
-local function GetRaidLeaderGuild()
-    for i = 1, GetNumGroupMembers() do
-        local name = GetRaidRosterInfo(i)
-        if name and UnitIsGroupLeader(name) then
-            local guildName = GetGuildInfo(name)
-            
-            if guildName then
-                return guildName
-            end
-        end
-    end
-    return nil
-end
-
-local function IsRaidLeaderInGuild()
-    local guildName = GetRaidLeaderGuild()
-    if guildName and guildName == LootTrackerConfig.guildName then
-        DebugPrint("Der Raidleiter ist Mitglied von '" .. LootTrackerConfig.guildName .. "'.")
-        return true
-    else
-        DebugPrint("Der Raidleiter ist NICHT Mitglied von '" .. LootTrackerConfig.guildName .. "'.")
+        DebugPrint(string.format("Nicht in einer Instanz"))
         return false
     end
 end
@@ -78,17 +78,21 @@ listenerFrame:RegisterEvent("LOOT_HISTORY_UPDATE_DROP")
 listenerFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "LOOT_HISTORY_UPDATE_DROP" then
         local encounterID, lootListID = ...
-
-        DebugPrint("Loot gefunden, prüfe Schwierigkeitsgrad...")
-
-        if not ShouldTrackInstance() then return end
-
-        DebugPrint("Schwierigkeitsgrad gültig, verarbeite Loot...")
+        DebugPrint("Loot Event...")
 
         local dropInfo = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
         if not dropInfo or not dropInfo.itemHyperlink then return end
 
         if dropInfo.winner then
+            DebugPrint("Prüfe Schwierigkeitsgrad...")
+            if not ShouldTrackInstance() then return end
+            DebugPrint("Schwierigkeitsgrad gültig, verarbeite Loot...")
+
+            if LootTrackerConfig.checkRaidLeader then
+                DebugPrint("Prüfe Raidleader")
+                if not IsRaidLeaderInGuild() then return end
+            end
+            DebugPrint("Prüfung bestanden, verarbeite Loot")
             local item = Item:CreateFromItemLink(dropInfo.itemHyperlink)
             local itemName = item:GetItemName()
             local itemID = select(1, GetItemInfoInstant(dropInfo.itemHyperlink))
@@ -179,16 +183,8 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
                 dateOnly = dateOnly
             })
 
-            -- Sicherstellen, dass LootTrackerConfig existiert, bevor darauf zugegriffen wird
-            if LootTrackerConfig and LootTrackerConfig.LogToChat then
+            if LootTrackerConfig.LogToChat then
                 print("RWLootTracker: Gewinner erkannt: " .. dropInfo.winner.playerName .. " (" .. playerClass .. ", " .. playerSpecialization .. ", GUID: " .. playerGUID .. "), " .. itemName .. " (Roll: " .. rollTypeName .. ", Wert: " .. rollValue .. ")")
-            end
-
-            -- Speichere die Daten nach jedem Loot-Drop
-            if RWLootTrackerGlobal.SaveLootData then
-                RWLootTrackerGlobal.SaveLootData()
-            else
-                DebugPrint("FEHLER: RWLootTrackerGlobal.SaveLootData ist NIL! Daten können nicht sofort gespeichert werden.")
             end
         end
     end

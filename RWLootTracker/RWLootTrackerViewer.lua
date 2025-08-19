@@ -1,4 +1,7 @@
 
+LootTrackerDetailsFrameName = "LootTrackerDetailsFrame"
+LootTrackerFrameName = "LootTrackerFrame"
+
 local function DebugPrint(msg)
     if LootTrackerConfig.DebugMode then
         print("RWLootTracker: " .. msg)
@@ -60,7 +63,7 @@ end
 local function ShowLootDetailsFrame(selectedDate)
     DebugPrint("ShowLootDetailsFrame aufgerufen für Datum: " .. tostring(selectedDate))
     if not RWLootTrackerGlobal.lootDetailsFrame then
-        local f = CreateFrame("Frame", "LootTrackerDetailsFrame", UIParent, "BasicFrameTemplateWithInset")
+        local f = CreateFrame("Frame", LootTrackerDetailsFrameName, UIParent, "BasicFrameTemplateWithInset")
         f:SetSize(600, 400)
         f:SetPoint("CENTER")
         f:SetMovable(true)
@@ -78,9 +81,6 @@ local function ShowLootDetailsFrame(selectedDate)
         f.title:SetText("Beute für den " .. selectedDate)
         f.title:SetTextColor(1, 1, 1, 1)
 
-        f.CloseButton:SetScript("OnClick", function() f:Hide() end)
-
-
         local scrollBox = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
         scrollBox:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -30)
         scrollBox:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -35, 15)
@@ -89,7 +89,6 @@ local function ShowLootDetailsFrame(selectedDate)
         local editBox = CreateFrame("EditBox", nil, scrollBox)
         editBox:SetMultiLine(true)
         editBox:SetFontObject(ChatFontNormal)
-        editBox:SetAutoFocus(false)
 
         editBox:SetPoint("TOPLEFT", scrollBox, "TOPLEFT")
         editBox:SetPoint("BOTTOMRIGHT", scrollBox, "BOTTOMRIGHT")
@@ -104,6 +103,9 @@ local function ShowLootDetailsFrame(selectedDate)
         DebugPrint(string.format("ShowLootDetailsFrame: editBox Größe nach Initialisierung: %.2fx%.2f", editBox:GetWidth(), editBox:GetHeight()))
 
         editBox:SetTextColor(1, 1, 1, 1)
+        editBox:SetScript("OnEscapePressed", function(self)
+            self:GetParent():GetParent():Hide()
+        end)
 
         RWLootTrackerGlobal.lootDetailsFrame = f
     end
@@ -187,72 +189,6 @@ function RWLootTrackerGlobal.InitializeCalendar()
     end
 end
 
--- Hilfsfunktion zum Generieren von Debug-Beutedaten
-local function GenerateDebugLootData()
-    -- Leere die bestehende DB für frische Debug-Daten
-    LootTrackerDB = {}
-
-    -- Funktion zum Hinzufügen eines einzelnen Beute-Eintrags
-    local function AddDebugEntry(dateOnly, timeSuffix, player, playerGUID, playerClass, playerSpecialization, itemLink, itemID, itemName, method, rollValue, boss, armorType, slot)
-        LootTrackerDB[dateOnly] = LootTrackerDB[dateOnly] or {}
-        table.insert(LootTrackerDB[dateOnly], {
-            time = dateOnly .. " " .. timeSuffix,
-            player = player,
-            playerGUID = playerGUID,
-            playerClass = playerClass,
-            playerSpecialization = playerSpecialization,
-            item = itemLink,
-            itemID = itemID,
-            itemName = itemName,
-            method = method,
-            rollValue = rollValue,
-            boss = boss,
-            armorType = armorType,
-            slot = slot,
-            dateOnly = dateOnly
-        })
-    end
-
-    -- Generiere Daten für 5 verschiedene Tage
-    for i = 0, 4 do -- i von 0 (heute) bis 4 (vor 4 Tagen)
-        local currentTimestamp = time() - (86400 * i) -- 86400 Sekunden = 1 Tag
-        local currentDate = date("%Y-%m-%d", currentTimestamp)
-
-        -- Tag 1: Heute (i=0) - Corresponds to current day (e.g., 2025-06-05) if today is June 5th
-        if i == 0 then
-            AddDebugEntry(currentDate, "20:00:00", "SpielerA", "0x1234567890ABCDEF", "Krieger", "Furor", "|cffa335ee|Hitem:19019:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Donnerzorn, Gesegnete Klinge des Windsuchers]|h|r", 19019, "Donnerzorn", "Need (Main Spec)", 95, "Ragnaros", "Waffe", "Main Hand")
-            AddDebugEntry(currentDate, "20:15:30", "SpielerB", "0xFEDCBA9876543210", "Magier", "Feuer", "|cff0070dd|Hitem:23072:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Helm des Schnellflugs]|h|r", 23072, "Helm des Schnellflugs", "Greed", 42, "Onyxia", "Stoff", "Kopf")
-            AddDebugEntry(currentDate, "20:30:00", "SpielerC", "0x1234567812345678", "Paladin", "Schutz", "|cff1eff00|Hitem:124636:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Herz des Teufelspirschers]|h|r", 124636, "Herz des Teufelspirschers", "Bonus", 88, "Kael'thas Sunstrider", "Schmuckstück", "Schmuckstück")
-        -- Tag 2: Gestern (i=1)
-        elseif i == 1 then
-            AddDebugEntry(currentDate, "19:00:00", "SpielerD", "0xABCDEF0123456789", "Todesritter", "Blut", "|cff0070dd|Hitem:49623:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Schiftung der Geißel des Eisens]|h|r", 49623, "Schiftung der Geißel des Eisens", "Need (Main Spec)", 70, "Lord Mark'gar", "Platte", "Schulter")
-            AddDebugEntry(currentDate, "19:45:00", "SpielerE", "0x9876543210FEDCBA", "Jäger", "Tierherrschaft", "|cff1eff00|Hitem:50444:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Schattenmourne]|h|r", 50444, "Schattenmourne", "Need (Main Spec)", 99, "Lichkönig", "Waffe", "Zweihändig")
-        -- Tag 3: Vor 2 Tagen (i=2)
-        elseif i == 2 then
-            AddDebugEntry(currentDate, "21:00:00", "SpielerF", "0xBA9876543210FEDC", "Druide", "Wiederherstellung", "|cff0070dd|Hitem:32371:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Kopfschmuck des Verwandlers]|h|r", 32371, "Kopfschmuck des Verwandlers", "Greed", 30, "Illidan Sturmgrimm", "Leder", "Kopf")
-            AddDebugEntry(currentDate, "21:10:00", "SpielerG", "0x1FEDCBA987654321", "Priester", "Schatten", "|cffa335ee|Hitem:30720:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Aschenbringer]|h|r", 30720, "Aschenbringer", "Need (Main Spec)", 100, "Kel'Thuzad", "Waffe", "Zweihändig")
-        -- Tag 4: Vor 3 Tagen (i=3)
-        elseif i == 3 then
-            AddDebugEntry(currentDate, "18:30:00", "SpielerH", "0x567890ABCDEF1234", "Schurke", "Täuschung", "|cff0070dd|Hitem:6948:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Defias-Lederweste]|h|r", 6948, "Defias-Lederweste", "Pass", 0, "Edwin VanCleef", "Leder", "Brust")
-        -- Tag 5: Vor 4 Tagen (i=4)
-        elseif i == 4 then
-            AddDebugEntry(currentDate, "22:00:00", "SpielerI", "0xABCD1234EFGH5678", "Hexenmeister", "Dämonologie", "|cff1eff00|Hitem:13374:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Zulianischer Tiger]|h|r", 13374, "Zulianischer Tiger", "Need (Main Spec)", 60, "Hoher Priester Thekal", "Sonstiges", "Mount")
-            AddDebugEntry(currentDate, "22:05:00", "SpielerJ", "0x87654321HGFE9876", "Mönch", "Braumeister", "|cff0070dd|Hitem:13375:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[Raptor des Razzashi]|h|r", 13375, "Raptor des Razzashi", "Greed", 25, "Hoher Priester Venoxis", "Sonstiges", "Mount")
-        end
-    end
-
-    local count = 0
-    for k, v in pairs(LootTrackerDB) do
-        count = count + 1
-    end
-    DebugPrint("Debug-Daten generiert. Anzahl der Tage in DB (gezählt): " .. count)
-
-    -- Nach dem Generieren der Daten, Kalender aktualisieren, falls das GUI offen ist
-    if RWLootTrackerGlobal.lootTrackerFrame and RWLootTrackerGlobal.lootTrackerFrame:IsVisible() then
-        RWLootTrackerGlobal.InitializeCalendar()
-    end
-end
-
 -- Funktion zum Initialisieren des Bestätigungs-Popups einmalig
 function RWLootTrackerGlobal.InitializeConfirmDialog()
     DebugPrint("InitializeConfirmDialog: Dialog-Frame initialisiert.")
@@ -290,8 +226,6 @@ function RWLootTrackerGlobal.InitializeConfirmDialog()
     dialog.cancelButton:SetPoint("BOTTOM", dialog, "BOTTOM", 45, 25)
     dialog.cancelButton:SetText("Nein")
     
-    -- Close Button des Templates
-    dialog.CloseButton:SetScript("OnClick", function() dialog:Hide() end)
 
     RWLootTrackerGlobal.confirmDialog = dialog -- Globale Referenz speichern
 end
@@ -338,7 +272,7 @@ function RWLootTrackerGlobal.CreateGUI()
         return
     end
 
-    local f = CreateFrame("Frame", "LootTrackerFrame", UIParent, "BasicFrameTemplateWithInset")
+    local f = CreateFrame("Frame", LootTrackerFrameName, UIParent, "BasicFrameTemplateWithInset")
     DebugPrint("RWLootTrackerGlobal.CreateGUI: lootTrackerFrame (f) nach CreateFrame: " .. tostring(f))
     if not f then
         DebugPrint("FEHLER: lootTrackerFrame (f) ist NIL nach CreateFrame!")
@@ -354,14 +288,13 @@ function RWLootTrackerGlobal.CreateGUI()
     f:SetScript("OnDragStop", f.StopMovingOrSizing)
     f:SetFrameStrata("DIALOG")
     f:SetFrameLevel(2)
-    f:SetClampedToScreen(true) -- Sicherstellen, dass das Hauptfenster auf dem Bildschirm bleibt
+    --f:SetClampedToScreen(true) -- Sicherstellen, dass das Hauptfenster auf dem Bildschirm bleibt
 
     f.title = f:CreateFontString(nil, "OVERLAY")
     f.title:SetFontObject("GameFontHighlight")
     f.title:SetPoint("LEFT", f.TitleBg, "LEFT", 5, 0)
     f.title:SetText("RWLootTracker " .. RWLootTrackerGlobal.Version)
     f.title:SetTextColor(1, 1, 1, 1)
-
 
     -- Panels für die Tab-Inhalte
     RWLootTrackerGlobal.lootDatabasePanel = CreateFrame("Frame", nil, f)
@@ -549,28 +482,9 @@ function RWLootTrackerGlobal.CreateGUI()
             end
         end
 
-        -- Aktualierungs-Button für den Kalender
-        local refreshCalendarButton = CreateFrame("Button", nil, RWLootTrackerGlobal.lootDatabasePanel, "GameMenuButtonTemplate")
-        refreshCalendarButton:SetPoint("LEFT", RWLootTrackerGlobal.calendarFrame, "RIGHT", 20, 100)
-        refreshCalendarButton:SetSize(180, 30)
-        refreshCalendarButton:SetText("Kalender aktualisieren")
-        refreshCalendarButton:SetScript("OnClick", function()
-            RWLootTrackerGlobal.InitializeCalendar()
-        end)
-
-        -- Debug Datensatz Button (im RWLootTrackerGlobal.lootDatabasePanel)
-        local debugButton = CreateFrame("Button", nil, RWLootTrackerGlobal.lootDatabasePanel, "GameMenuButtonTemplate")
-        debugButton:SetPoint("TOPLEFT", refreshCalendarButton, "BOTTOMLEFT", 0, -10)
-        debugButton:SetSize(180, 30)
-        debugButton:SetText("Debug Datensatz")
-        debugButton:SetFrameLevel(RWLootTrackerGlobal.lootDatabasePanel:GetFrameLevel() + 1)
-        debugButton:SetScript("OnClick", function()
-            GenerateDebugLootData()
-        end)
-
         -- Neuer "Datenbank leeren" Button
         local clearDatabaseButton = CreateFrame("Button", nil, RWLootTrackerGlobal.lootDatabasePanel, "GameMenuButtonTemplate")
-        clearDatabaseButton:SetPoint("TOPLEFT", debugButton, "BOTTOMLEFT", 0, -10)
+        clearDatabaseButton:SetPoint("TOPLEFT", RWLootTrackerGlobal.calendarFrame, "BOTTOMLEFT", 0, -10)
         clearDatabaseButton:SetSize(180, 30)
         clearDatabaseButton:SetText("Datenbank leeren")
         clearDatabaseButton:SetFrameLevel(RWLootTrackerGlobal.lootDatabasePanel:GetFrameLevel() + 1)
@@ -583,11 +497,6 @@ function RWLootTrackerGlobal.CreateGUI()
                 function()
                     DebugPrint("Datenbank wird geleert. (Bestätigt)")
                     LootTrackerDB = {} -- Leere die Datenbank
-                    if RWLootTrackerGlobal.SaveLootData then
-                        RWLootTrackerGlobal.SaveLootData() -- Speichere den leeren Zustand
-                    else
-                        DebugPrint("FEHLER: RWLootTrackerGlobal.SaveLootData ist NIL! Daten können nicht sofort gespeichert werden.")
-                    end
                     RWLootTrackerGlobal.InitializeCalendar() -- Kalender aktualisieren, um die leeren Daten anzuzeigen
                     DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[RWLootTracker]|r Die Beutedatenbank wurde erfolgreich geleert.")
                 end,
