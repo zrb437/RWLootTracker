@@ -186,6 +186,8 @@ listenerFrame:SetScript("OnEvent", function(self, event, ...)
             if LootTrackerConfig.LogToChat then
                 print("RWLootTracker: Gewinner erkannt: " .. dropInfo.winner.playerName .. " (" .. playerClass .. ", " .. playerSpecialization .. ", GUID: " .. playerGUID .. "), " .. itemName .. " (Roll: " .. rollTypeName .. ", Wert: " .. rollValue .. ")")
             end
+        else
+            DebugPrint("... no Winner yet")
         end
     end
 end)

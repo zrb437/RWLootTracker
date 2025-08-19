@@ -407,18 +407,18 @@ function RWLootTrackerGlobal.CreateGUI()
             end
         end
         
-		local rangelnLabel = RWLootTrackerGlobal.lootDatabasePanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge2")
-		rangelnLabel:SetPoint("TOPRIGHT", RWLootTrackerGlobal.lootDatabasePanel, "TOPRIGHT", -10, -20)
-		rangelnLabel:SetText("Rangeln Worldwide")
-		rangelnLabel:SetTextColor(1, 1, 1, 1)
-		rangelnLabel:SetWidth(190)
-		
-		local lootTrackerLabel = RWLootTrackerGlobal.lootDatabasePanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-		lootTrackerLabel:SetPoint("TOPRIGHT", RWLootTrackerGlobal.lootDatabasePanel, "TOPRIGHT", -10, -80)
-		lootTrackerLabel:SetText("Loot Tracker")
-		lootTrackerLabel:SetTextColor(1, 1, 1, 1)
-		lootTrackerLabel:SetWidth(190)
-		
+        local rangelnLabel = RWLootTrackerGlobal.lootDatabasePanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge2")
+        rangelnLabel:SetPoint("TOPRIGHT", RWLootTrackerGlobal.lootDatabasePanel, "TOPRIGHT", -10, -20)
+        rangelnLabel:SetText("Rangeln Worldwide")
+        rangelnLabel:SetTextColor(1, 1, 1, 1)
+        rangelnLabel:SetWidth(190)
+        
+        local lootTrackerLabel = RWLootTrackerGlobal.lootDatabasePanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+        lootTrackerLabel:SetPoint("TOPRIGHT", RWLootTrackerGlobal.lootDatabasePanel, "TOPRIGHT", -10, -80)
+        lootTrackerLabel:SetText("Loot Tracker")
+        lootTrackerLabel:SetTextColor(1, 1, 1, 1)
+        lootTrackerLabel:SetWidth(190)
+        
         local logoTexture = RWLootTrackerGlobal.lootDatabasePanel:CreateTexture(nil, "ARTWORK")
         logoTexture:SetTexture("Interface/AddOns/RWLootTracker/media/rwl_lass_rangeln.png")
         logoTexture:SetSize(200, 200)
