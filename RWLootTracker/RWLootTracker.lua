@@ -5,7 +5,6 @@ RWLootTrackerGlobal = RWLootTrackerGlobal or {}
 LootTrackerConfig = LootTrackerConfig or {}
 
 -- Addon-Datenbank für Beute-Einträge
--- Die Struktur wird jetzt sein: LootTrackerDB[Datum_String] = { {Beute-Eintrag 1}, {Beute-Eintrag 2}, ... }
 LootTrackerDB = LootTrackerDB or {}
 
 
@@ -13,8 +12,8 @@ RWLootTrackerGlobal.Version = "0.3.0"
 
 
 local defaults = {
-    DebugMode = false, -- Aktiviert zusätzliche Debug-Ausgaben im Chat
-    LogToChat = true,  -- Sendet Beute-Meldungen an den Chat
+    DebugMode = false,
+    LogToChat = true,
     AddTableHeader = true,
     checkRaidLeader = false;
     guildName = "Rangeln Worldwide",
@@ -28,7 +27,6 @@ local defaults = {
 
 
 local function DebugPrint(msg)
-
     if LootTrackerConfig and LootTrackerConfig.DebugMode then
         print("RWLootTracker.lua: " .. msg)
     end
@@ -145,8 +143,21 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
     generalLabel:SetTextColor(1, 1, 1, 1)
     generalLabel:SetDrawLayer("OVERLAY")
 
-    local logToChatCheckbox = CreateFrame("CheckButton", nil, configChatFrame, "UICheckButtonTemplate")
-    logToChatCheckbox:SetPoint("LEFT", generalLabel, "LEFT", 15, -30)
+    local openCalendarButton = CreateFrame("Button", nil, configChatFrame, "GameMenuButtonTemplate")
+    openCalendarButton:SetPoint("TOPLEFT", configChatFrame, "BOTTOMLEFT", 15, 0)
+    openCalendarButton:SetSize(180, 30)
+    openCalendarButton:SetText("Kalender öffnen")
+    openCalendarButton:SetScript("OnClick", function()
+        DebugPrint("Kalender öffnen button clicked.")
+        if RWLootTrackerGlobal.CreateGUI and type(RWLootTrackerGlobal.CreateGUI) == "function" then
+            RWLootTrackerGlobal.CreateGUI()
+        else
+            DebugPrint("RWLootTracker: GUI-Modul nicht geladen oder CreateGUI-Funktion nicht verfügbar. Bitte Addon neuladen.")
+        end
+        end)
+
+    local logToChatCheckbox = CreateFrame("CheckButton", nil, openCalendarButton, "UICheckButtonTemplate")
+    logToChatCheckbox:SetPoint("LEFT", openCalendarButton, "LEFT", 0, -40)
     logToChatCheckbox:SetFrameLevel(configChatFrame:GetFrameLevel() + 1)
 
     logToChatCheckbox.text = logToChatCheckbox:CreateFontString(nil, "OVERLAY")
@@ -232,7 +243,7 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
     -- Label für die Textbox
     local guildLabel = guildNameFrame:CreateFontString(nil, "OVERLAY")
     guildLabel:SetFontObject("GameFontNormal")
-    guildLabel:SetPoint("TOPLEFT", guildNameFrame, "TOPLEFT", 5, 5)
+    guildLabel:SetPoint("TOPLEFT", guildNameFrame, "TOPLEFT", 38, 5)
     guildLabel:SetText("Gildenname des Raidleiters:")
     guildLabel:SetTextColor(1, 1, 1, 1)
 
@@ -274,7 +285,11 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
         if enteredText ~= LootTrackerConfig.guildName then
             self:SetTextColor(1, 0, 0)
         else
-            self:SetTextColor(1, 1, 1)
+            if LootTrackerConfig.checkRaidLeader then
+                self:SetTextColor(1, 1, 1)
+            else
+                self:SetTextColor(0.5, 0.5, 0.5)
+            end
         end
     end)
 
@@ -290,7 +305,7 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
             guildNameEditBox:SetTextColor(1, 1, 1)
         else
             guildNameEditBox:Disable()
-            guildNameEditBox:SetTextColor(0.5, 0.5, 0.5) -- Optional: Machen Sie den Text grau
+            guildNameEditBox:SetTextColor(0.5, 0.5, 0.5)
         end
     end)
 
