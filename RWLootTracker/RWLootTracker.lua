@@ -16,6 +16,8 @@ local defaults = {
     DebugMode = false, -- Aktiviert zusätzliche Debug-Ausgaben im Chat
     LogToChat = true,  -- Sendet Beute-Meldungen an den Chat
     AddTableHeader = true,
+    checkRaidLeader = false;
+    guildName = "Rangeln Worldwide",
     trackedRaidDifficulties = {
         ["NHC"] = true,  -- 14
         ["HC"] = true,  -- 15
@@ -146,8 +148,93 @@ function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
         DebugPrint("'Add Table Header' auf " .. tostring(LootTrackerConfig.AddTableHeader) .. " gesetzt.")
     end)
 
+    local checkRaidLeaderFrame = CreateFrame("Frame", nil, parentFrame)
+    checkRaidLeaderFrame:SetPoint("TOPLEFT", addTableHeaderCheckbox, "BOTTOMLEFT", 0, -10)
+    checkRaidLeaderFrame:SetSize(300, 30)
+
+    local checkRaidLeaderCheckbox = CreateFrame("CheckButton", nil, checkRaidLeaderFrame, "UICheckButtonTemplate")
+    checkRaidLeaderCheckbox:SetPoint("LEFT", checkRaidLeaderFrame, "LEFT", 0, 0)
+
+    local checkRaidLeaderLabel = checkRaidLeaderCheckbox:CreateFontString(nil, "OVERLAY")
+    checkRaidLeaderLabel:SetFontObject("GameFontNormal")
+    checkRaidLeaderLabel:SetPoint("LEFT", checkRaidLeaderCheckbox, "RIGHT", 5, 0)
+    checkRaidLeaderLabel:SetText("Raidleiter-Gilde prüfen")
+    checkRaidLeaderLabel:SetTextColor(1, 1, 1, 1)
+
+    checkRaidLeaderCheckbox:SetChecked(LootTrackerConfig.checkRaidLeader)
+
+    -- Frame für die Gildennamen-Textbox
+    local guildNameFrame = CreateFrame("Frame", nil, parentFrame)
+    guildNameFrame:SetPoint("TOPLEFT", checkRaidLeaderCheckbox, "BOTTOMLEFT", 0, -10)
+    guildNameFrame:SetSize(300, 30)
+
+    -- Label für die Textbox
+    local guildLabel = guildNameFrame:CreateFontString(nil, "OVERLAY")
+    guildLabel:SetFontObject("GameFontNormal")
+    guildLabel:SetPoint("TOPLEFT", guildNameFrame, "TOPLEFT", 5, 5)
+    guildLabel:SetText("Gildenname des Raidleiters:")
+    guildLabel:SetTextColor(1, 1, 1, 1)
+
+    -- Textbox (EditBox) für den Gildennamen
+    local guildNameEditBox = CreateFrame("EditBox", nil, guildNameFrame, "InputBoxTemplate")
+    guildNameEditBox:SetSize(200, 20)
+    guildNameEditBox:SetPoint("LEFT", guildLabel, "RIGHT", 10, 0)
+    guildNameEditBox:SetTextInsets(5, 5, 5, 5)
+    guildNameEditBox:SetAutoFocus(false)
+
+    -- Setzen Sie den Text aus den gespeicherten Einstellungen
+    guildNameEditBox:SetText(LootTrackerConfig.guildName)
+
+    guildNameEditBox:SetScript("OnEnterPressed", function(self)
+        LootTrackerConfig.guildName = self:GetText()
+        self:SetTextColor(1, 1, 1)
+        self:ClearFocus()
+        self:HighlightText(0,0)
+        self:ClearHighlightText()
+    end)
+
+    -- Wenn das Feld den Fokus verliert (z.B. durch Klick), auch speichern
+    guildNameEditBox:SetScript("OnEscapePressed", function(self)
+        self:SetText(LootTrackerConfig.guildName)
+        self:ClearFocus()
+        self:HighlightText(0,0)
+        self:ClearHighlightText()
+    end)
+
+    guildNameEditBox:SetScript("OnEditFocusLost", function(self)
+        self:SetText(LootTrackerConfig.guildName)
+        self:ClearFocus()
+        self:HighlightText(0,0)
+        self:ClearHighlightText()
+    end)
+
+    guildNameEditBox:SetScript("OnTextChanged", function(self)
+        local enteredText = self:GetText()
+        if enteredText ~= LootTrackerConfig.guildName then
+            self:SetTextColor(1, 0, 0)
+        else
+            self:SetTextColor(1, 1, 1)
+        end
+    end)
+
+    if not LootTrackerConfig.checkRaidLeader then
+        guildNameEditBox:Disable()
+        guildNameEditBox:SetTextColor(0.5, 0.5, 0.5)
+    end
+    
+    checkRaidLeaderCheckbox:SetScript("OnClick", function(self)
+        LootTrackerConfig.checkRaidLeader = self:GetChecked()
+        if LootTrackerConfig.checkRaidLeader then
+            guildNameEditBox:Enable()
+            guildNameEditBox:SetTextColor(1, 1, 1)
+        else
+            guildNameEditBox:Disable()
+            guildNameEditBox:SetTextColor(0.5, 0.5, 0.5) -- Optional: Machen Sie den Text grau
+        end
+    end)
+
     local raidDifficultyConfig = CreateFrame("Frame", nil, parentFrame)
-    raidDifficultyConfig:SetPoint("TOPLEFT", addTableHeaderCheckbox, "BOTTOMLEFT", 0, -20)
+    raidDifficultyConfig:SetPoint("TOPLEFT", guildNameFrame, "BOTTOMLEFT", 0, -20)
     raidDifficultyConfig:SetSize(420, 180)
     raidDifficultyConfig:SetFrameLevel(parentFrame:GetFrameLevel() + 1)
 
@@ -210,7 +297,11 @@ local category = Settings.RegisterCanvasLayoutCategory(RWLootTrackerGlobal.setti
 Settings.RegisterAddOnCategory(category)
 
 RWLootTrackerGlobal.settingsPanel:SetScript("OnShow", function(self)
-	RWLootTrackerGlobal.CreateSettingsPanelElements(self)
+    if not self.elementsCreated then
+            DebugPrint("settingsPanel OnShow aufgerufen. Erstelle GUI-Elemente...")
+            RWLootTrackerGlobal.CreateSettingsPanelElements(self)
+            self.elementsCreated = true
+    end
 end)
 
 

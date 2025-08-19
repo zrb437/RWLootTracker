@@ -12,7 +12,11 @@ local function ShouldTrackInstance()
     local instanceName, instanceMapID, difficultyName, maxPlayers, isDynamic, instanceID, instanceGroupSize = GetInstanceInfo()
     
     if inInstance then
-        if instanceType == "raid" then
+        local validLeader = true
+        if LootTrackerConfig.checkRaidLeader then
+            validLeader = IsRaidLeaderInGuild()
+        end
+        if instanceType == "raid" and validLeader then
             local instanceDifficulty = nil
             if difficultyName == 14 then
                 instanceDifficulty = "NHC"
@@ -41,6 +45,32 @@ local function ShouldTrackInstance()
         return false
     end
 end
+
+local function GetRaidLeaderGuild()
+    for i = 1, GetNumGroupMembers() do
+        local name = GetRaidRosterInfo(i)
+        if name and UnitIsGroupLeader(name) then
+            local guildName = GetGuildInfo(name)
+            
+            if guildName then
+                return guildName
+            end
+        end
+    end
+    return nil
+end
+
+local function IsRaidLeaderInGuild()
+    local guildName = GetRaidLeaderGuild()
+    if guildName and guildName == LootTrackerConfig.guildName then
+        DebugPrint("Der Raidleiter ist Mitglied von '" .. LootTrackerConfig.guildName .. "'.")
+        return true
+    else
+        DebugPrint("Der Raidleiter ist NICHT Mitglied von '" .. LootTrackerConfig.guildName .. "'.")
+        return false
+    end
+end
+
 
 local listenerFrame = CreateFrame("Frame")
 listenerFrame:RegisterEvent("LOOT_HISTORY_UPDATE_DROP")
