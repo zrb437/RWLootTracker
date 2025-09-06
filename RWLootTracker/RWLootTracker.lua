@@ -8,7 +8,7 @@ LootTrackerConfig = LootTrackerConfig or {}
 LootTrackerDB = LootTrackerDB or {}
 
 
-RWLootTrackerGlobal.Version = "0.3.0"
+RWLootTrackerGlobal.Version = "0.3.1"
 
 
 local defaults = {
@@ -131,6 +131,12 @@ end
 
 function RWLootTrackerGlobal.CreateSettingsPanelElements(parentFrame)
     ApplyDefaults(LootTrackerConfig, defaults)
+
+    local rangelnIconImage = parentFrame:CreateTexture(nil, "OVERLAY")
+    rangelnIconImage:SetTexture("Interface/AddOns/RWLootTracker/media/RangelnIcon.tga")
+    rangelnIconImage:SetSize(192, 192) 
+    rangelnIconImage:SetPoint("TOPRIGHT", parentFrame, "TOPRIGHT", -5, 0)
+
     local configChatFrame = CreateFrame("Frame", nil, parentFrame)
     configChatFrame:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -15)
     configChatFrame:SetSize(300, 30)

@@ -213,7 +213,10 @@ function RWLootTrackerGlobal.CreateGUI()
     f:SetScript("OnDragStop", f.StopMovingOrSizing)
     f:SetFrameStrata("DIALOG")
     f:SetFrameLevel(2)
-    --f:SetClampedToScreen(true) -- Sicherstellen, dass das Hauptfenster auf dem Bildschirm bleibt
+    f:SetClampedToScreen(true)
+    f.CloseButton:SetScript("OnClick", function(self)
+    f:Hide()
+    end)
 
     f.title = f:CreateFontString(nil, "OVERLAY")
     f.title:SetFontObject("GameFontHighlight")
