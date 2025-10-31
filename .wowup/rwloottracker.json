@@ -1,0 +1,12 @@
+{
+  "name": "RWLootTracker",
+  "author": "Die oberste Rangelleitung",
+  "description": "Tracking raid loot",
+  "images": [
+    "https://raw.githubusercontent.com/zrb437/rwloottracker/main/RWLootTracker/media/rwl_lass_rangeln.png" 
+  ],
+  "categories": [
+    "Loot",
+    "Raid Tools"
+  ]
+}
