@@ -1,12 +1,11 @@
 # Rangeln Worldwide Loot Tracker
-Verfolgt Beute in Raids, Dungeons und mehr.
+Tracks raid loot
 
-## Befehle
-Ingame aufrufbar mit
+## Slash-Commands
  * /rwloottracker
  * /rwl
 
-## Funktionen
- * Loot aufzeichnen in Raids, Gruppen, PVP, Open World
- * Datenbank um Lootübersichten vergangener Tage zu sehen
- * Ansicht optimiert für Copy-Paste Export in Tabellenverarbeitungen (Google Sheet, Excel, ...)
+## Functions
+ * Loot tracking in raids based on difficulty
+ * Calendar with loot history
+ * Loot-View is optimized for copy-paste into calculation sheets (Google Sheet, MS Excel, ...)

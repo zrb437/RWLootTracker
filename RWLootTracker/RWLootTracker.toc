@@ -1,6 +1,6 @@
 ## Interface: 110205
 ## Title: RWLootTracker
-## Notes: Verfolgt Beute in Raids, Dungeons und mehr.
+## Notes: Tracking of raid loot
 ## Author: Die oberste Rangelleitung
 ## SavedVariables: LootTrackerConfig, LootTrackerDB
 ## Dependencies: Blizzard_Console
